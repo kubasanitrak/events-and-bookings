@@ -155,7 +155,7 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
         <section class="eab-detail__section eab-detail__attendees">
             <h2><?php esc_html_e('Účastníci', 'events-and-bookings'); ?></h2>
             <?php
-            $attendees = apply_filters('eab_event_attendees', array(), $post_id);
+            $attendees = apply_filters('eab_event_attendees', EAB_Capacity::get_public_attendee_names($post_id), $post_id);
             if (!empty($attendees)) :
                 echo '<ul class="eab-attendees-list">';
                 foreach ($attendees as $name) {

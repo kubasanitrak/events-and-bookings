@@ -22,7 +22,12 @@ class EAB_Activator {
         EAB_Roles::register_role();
         EAB_Settings::ensure_defaults();
         self::set_default_options();
+        require_once EAB_PLUGIN_DIR . 'includes/class-eab-db.php';
+        EAB_DB::create_tables();
         self::create_pages();
+
+        require_once EAB_PLUGIN_DIR . 'includes/class-eab-cron.php';
+        EAB_Cron::schedule();
 
         flush_rewrite_rules();
 
@@ -40,7 +45,19 @@ class EAB_Activator {
             'eab_login_page'          => 0,
             'eab_register_page'       => 0,
             'eab_email_sender_name'   => get_bloginfo('name'),
-            'eab_email_sender_email'  => get_option('admin_email'),
+            'eab_email_sender_email'    => get_option('admin_email'),
+            'eab_bank_transfer_enabled' => 1,
+            'eab_gopay_enabled'           => 0,
+            'eab_order_expiry_hours'      => 24,
+            'eab_bank_account_name'       => '',
+            'eab_bank_account_number'     => '',
+            'eab_bank_code'               => '',
+            'eab_bank_iban'                 => '',
+            'eab_bank_bic'                  => '',
+            'eab_order_expiry_notification' => 1,
+            'eab_basket_cleanup_hours'        => 72,
+            'eab_admin_notification_enabled'  => 1,
+            'eab_admin_notification_email'  => get_option('admin_email'),
         );
 
         foreach ($defaults as $key => $value) {
@@ -73,7 +90,12 @@ class EAB_Activator {
             'dashboard' => array(
                 'title'   => __('Můj účet', 'events-and-bookings'),
                 'slug'    => 'muj-ucet',
-                'content' => '<!-- eab_dashboard phase 4 -->',
+                'content' => '[eab_dashboard]',
+            ),
+            'checkout' => array(
+                'title'   => __('Rezervace – pokladna', 'events-and-bookings'),
+                'slug'    => 'pokladna',
+                'content' => '[eab_checkout]',
             ),
         );
 
@@ -114,7 +136,8 @@ class EAB_Activator {
      */
     public static function maybe_create_pages() {
         $ids = get_option('eab_page_ids', array());
-        if (!is_array($ids) || empty($ids['login']) || !get_post($ids['login'])) {
+        if (!is_array($ids) || empty($ids['login']) || !get_post($ids['login'])
+            || empty($ids['checkout']) || !get_post($ids['checkout'])) {
             self::create_pages();
         }
     }

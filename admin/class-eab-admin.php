@@ -137,14 +137,42 @@ class EAB_Admin {
     }
 
     public function render_dashboard_placeholder() {
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html__('Akce a rezervace', 'events-and-bookings') . '</h1>';
-        echo '<p>' . esc_html__('Přehled rezervací a statistik bude doplněn v další fázi.', 'events-and-bookings') . '</p>';
+        if (!current_user_can('manage_options')) {
+            echo '<div class="wrap"><p>' . esc_html__('Nemáte oprávnění k přehledu objednávek.', 'events-and-bookings') . '</p></div>';
+            return;
+        }
+
+        global $wpdb;
+
+        $pending_orders = 0;
+        $paid_orders    = 0;
+        $revenue        = 0;
+        $recent_orders  = array();
+
+        if (EAB_DB::table_exists('eab_orders')) {
+            $table = $wpdb->prefix . 'eab_orders';
+            $pending_orders = (int) $wpdb->get_var(
+                "SELECT COUNT(*) FROM $table WHERE status IN ('pending', 'awaiting_payment')"
+            );
+            $paid_orders = (int) $wpdb->get_var(
+                "SELECT COUNT(*) FROM $table WHERE status = 'paid'"
+            );
+            $revenue = (float) $wpdb->get_var(
+                "SELECT COALESCE(SUM(total), 0) FROM $table WHERE status = 'paid'"
+            );
+            $recent_orders = $wpdb->get_results(
+                "SELECT o.*, u.display_name FROM $table o
+                 LEFT JOIN {$wpdb->users} u ON o.user_id = u.ID
+                 ORDER BY o.created_at DESC LIMIT 8"
+            );
+        }
+
+        include EAB_PLUGIN_DIR . 'admin/partials/dashboard-page.php';
+
         if (!EAB_ACF::is_active()) {
             echo '<div class="notice notice-warning"><p>';
-            echo esc_html__('ACF Pro není aktivní — pole pro termíny, ceny a kapacitu zatím nelze spravovat přes ACF.', 'events-and-bookings');
+            echo esc_html__('ACF Pro není aktivní — synchronizujte field groups z acf-json/.', 'events-and-bookings');
             echo '</p></div>';
         }
-        echo '</div>';
     }
 }

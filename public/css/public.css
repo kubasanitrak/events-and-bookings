@@ -351,3 +351,98 @@
 .required {
   color: #d63638;
 }
+
+/* Checkout */
+.eab-checkout-line {
+  border: 1px solid #e2e4e7;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.eab-checkout-line__header h3 {
+  margin: 0 0 0.35rem;
+}
+
+.eab-remove-line {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.eab-checkout-line__waitlist {
+  color: #996800;
+  font-size: 0.9rem;
+}
+
+.eab-checkout-grand-total {
+  font-size: 1.15rem;
+  margin: 1.5rem 0;
+}
+
+.eab-attendee-block {
+  border-top: 1px dashed #ddd;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.eab-checkout-payment,
+.eab-checkout-services {
+  margin: 1.25rem 0;
+  border: 0;
+}
+
+.eab-radio {
+  display: block;
+  margin: 0.35rem 0;
+}
+
+.eab-btn--large {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+}
+
+.eab-bank-transfer__table {
+  width: 100%;
+  max-width: 28rem;
+  margin: 1rem 0;
+}
+
+.eab-bank-transfer__table th {
+  text-align: left;
+  padding-right: 1rem;
+}
+
+.eab-bank-transfer__expires {
+  margin: 1rem 0;
+  font-size: 1.05rem;
+}
+
+.eab-dashboard__orders {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.eab-dashboard__orders th,
+.eab-dashboard__orders td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e2e4e7;
+  text-align: left;
+}
+
+.eab-book-cta__add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.eab-book-spots {
+  width: 4rem;
+}

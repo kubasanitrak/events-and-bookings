@@ -2,11 +2,35 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.6.1] - 2026-06-04
+
+### Changed
+
+- Version bump.
+
 ## [0.4.1] - 2026-06-04
 
 ### Changed
 
 - Version bump.
+
+## [0.6.0] - 2026-06-04
+
+### Added
+
+- Phase 5: Paylibo QR platby na stránce bankovního převodu.
+- Cron: expirace objednávek, připomínka platby, úklid košíku a logů.
+- Admin **Objednávky** — potvrzení platby / zrušení; přehled se statistikami.
+- Nastavení bankovního účtu, lhůty platby, e-mailů a OP v administraci.
+
+## [0.5.0] - 2026-06-04
+
+### Added
+
+- Phase 4: basket, checkout (`[eab_checkout]`), capacity holds, pricing rules, optional services.
+- Orders tables, booking spots (regular/alternate), bank transfer instructions.
+- `[eab_dashboard]` / `[eab_basket_count]`; book button adds to basket → `/pokladna/`.
+- Order confirmation e-mails; attendee list from confirmed bookings.
 
 ## [0.4.0] - 2026-06-04
 

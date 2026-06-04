@@ -60,6 +60,9 @@ class EAB_Public {
             'eab_register',
             'eab_login',
             'eab_set_password',
+            'eab_checkout',
+            'eab_dashboard',
+            'eab_basket_count',
         );
         foreach ($tags as $tag) {
             if (has_shortcode($post->post_content, $tag)) {
@@ -91,12 +94,10 @@ class EAB_Public {
         );
 
         wp_localize_script('eab-public', 'eab_public', array(
-            'ajax_url'     => admin_url('admin-ajax.php'),
-            'nonce'        => wp_create_nonce('eab_public'),
-            'is_logged_in' => is_user_logged_in(),
-            'i18n'         => array(
-                'booking_soon' => __('Rezervace bude brzy dostupná.', 'events-and-bookings'),
-            ),
+            'ajax_url'      => admin_url('admin-ajax.php'),
+            'nonce'         => wp_create_nonce('eab_public'),
+            'is_logged_in'  => is_user_logged_in(),
+            'checkout_url'  => EAB_Auth::get_page_url('checkout'),
         ));
     }
 }

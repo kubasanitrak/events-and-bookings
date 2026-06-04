@@ -39,6 +39,20 @@ Flow: register → verification e-mail → set password → login. Assign GDPR p
 
 Verification link format: `?eab_verify=1&eab_uid=ID&eab_token=TOKEN` (home URL or any front page).
 
+## Booking (Phase 4)
+
+| Shortcode | Page |
+|-----------|------|
+| `[eab_checkout]` | `/pokladna/` |
+| `[eab_dashboard]` | `/muj-ucet/` |
+| `[eab_basket_count]` | header widget |
+
+Flow: detail → **Rezervovat místo** → pokladna (účastníci, služby) → bankovní převod → potvrzení.
+
+Configure under **Akce a rezervace → Nastavení** (bank account, payment deadline, admin e-mails).
+
+Admin: **Objednávky** — confirm bank transfer manually (`Potvrdit platbu`). QR payment uses Paylibo API when account number + bank code are set.
+
 ## Composer
 
 Runtime dependencies are installed into `vendor/` and bundled in release zips (sites do not run Composer).

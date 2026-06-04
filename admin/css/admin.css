@@ -1,0 +1,35 @@
+.eab-status {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.eab-status--awaiting_payment,
+.eab-status--pending {
+  background: #fcf9e8;
+  color: #996800;
+}
+
+.eab-status--paid {
+  background: #edfaef;
+  color: #1e6b2e;
+}
+
+.eab-status--cancelled,
+.eab-status--expired,
+.eab-status--failed {
+  background: #fcf0f1;
+  color: #8a2424;
+}
+
+.eab-qr-code {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.eab-qr-code img {
+  border: 1px solid #ddd;
+  padding: 8px;
+  background: #fff;
+}
