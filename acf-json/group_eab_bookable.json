@@ -1,0 +1,442 @@
+{
+    "key": "group_eab_bookable",
+    "title": "EAB – Akce / trénink",
+    "fields": [
+        {
+            "key": "field_eab_booking_open",
+            "label": "Rezervace otevřena",
+            "name": "booking_open",
+            "type": "true_false",
+            "ui": 1,
+            "default_value": 1
+        },
+        {
+            "key": "field_eab_show_attendee_list",
+            "label": "Zobrazit seznam účastníků",
+            "name": "show_attendee_list",
+            "type": "true_false",
+            "ui": 1,
+            "default_value": 1,
+            "instructions": "Na webu uvidí pouze přihlášení členové (a administrátoři)."
+        },
+        {
+            "key": "field_eab_schedule_mode",
+            "label": "Typ termínu",
+            "name": "schedule_mode",
+            "type": "select",
+            "choices": {
+                "season": "Sezóna (od–do)",
+                "one_off": "Jednorázově",
+                "whole_day": "Celý den (čas od–do)"
+            },
+            "default_value": "one_off",
+            "return_format": "value"
+        },
+        {
+            "key": "field_eab_season_start_date",
+            "label": "Sezóna – začátek (datum)",
+            "name": "season_start_date",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "season" }]
+            ]
+        },
+        {
+            "key": "field_eab_season_start_time",
+            "label": "Sezóna – začátek (čas)",
+            "name": "season_start_time",
+            "type": "time_picker",
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "season" }]
+            ]
+        },
+        {
+            "key": "field_eab_season_end_date",
+            "label": "Sezóna – konec (datum)",
+            "name": "season_end_date",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "season" }]
+            ]
+        },
+        {
+            "key": "field_eab_season_end_time",
+            "label": "Sezóna – konec (čas)",
+            "name": "season_end_time",
+            "type": "time_picker",
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "season" }]
+            ]
+        },
+        {
+            "key": "field_eab_one_off_date",
+            "label": "Datum",
+            "name": "one_off_date",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "one_off" }]
+            ]
+        },
+        {
+            "key": "field_eab_one_off_time",
+            "label": "Čas",
+            "name": "one_off_time",
+            "type": "time_picker",
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "one_off" }]
+            ]
+        },
+        {
+            "key": "field_eab_whole_day_date",
+            "label": "Datum",
+            "name": "whole_day_date",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "whole_day" }]
+            ]
+        },
+        {
+            "key": "field_eab_whole_day_time_from",
+            "label": "Čas od",
+            "name": "whole_day_time_from",
+            "type": "time_picker",
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "whole_day" }]
+            ]
+        },
+        {
+            "key": "field_eab_whole_day_time_to",
+            "label": "Čas do",
+            "name": "whole_day_time_to",
+            "type": "time_picker",
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "conditional_logic": [
+                [{ "field": "field_eab_schedule_mode", "operator": "==", "value": "whole_day" }]
+            ]
+        },
+        {
+            "key": "field_eab_repetition_mode",
+            "label": "Opakování",
+            "name": "repetition_mode",
+            "type": "select",
+            "choices": {
+                "none": "Žádné",
+                "weekly": "Týdně (období)",
+                "multi_term": "Více termínů"
+            },
+            "default_value": "none",
+            "return_format": "value"
+        },
+        {
+            "key": "field_eab_repetition_weekly_start",
+            "label": "Týdenní – začátek období",
+            "name": "repetition_weekly_start",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_repetition_mode", "operator": "==", "value": "weekly" }]
+            ]
+        },
+        {
+            "key": "field_eab_repetition_weekly_end",
+            "label": "Týdenní – konec období",
+            "name": "repetition_weekly_end",
+            "type": "date_picker",
+            "display_format": "d.m.Y",
+            "return_format": "Y-m-d",
+            "conditional_logic": [
+                [{ "field": "field_eab_repetition_mode", "operator": "==", "value": "weekly" }]
+            ]
+        },
+        {
+            "key": "field_eab_repetition_terms",
+            "label": "Termíny",
+            "name": "repetition_terms",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Přidat termín",
+            "sub_fields": [
+                {
+                    "key": "field_eab_term_label",
+                    "label": "Název",
+                    "name": "label",
+                    "type": "text"
+                },
+                {
+                    "key": "field_eab_term_date_from",
+                    "label": "Od",
+                    "name": "date_from",
+                    "type": "date_picker",
+                    "display_format": "d.m.Y",
+                    "return_format": "Y-m-d"
+                },
+                {
+                    "key": "field_eab_term_date_to",
+                    "label": "Do",
+                    "name": "date_to",
+                    "type": "date_picker",
+                    "display_format": "d.m.Y",
+                    "return_format": "Y-m-d"
+                }
+            ],
+            "conditional_logic": [
+                [{ "field": "field_eab_repetition_mode", "operator": "==", "value": "multi_term" }]
+            ]
+        },
+        {
+            "key": "field_eab_place_text",
+            "label": "Místo – text",
+            "name": "place_text",
+            "type": "textarea",
+            "rows": 3
+        },
+        {
+            "key": "field_eab_place_photo",
+            "label": "Místo – foto",
+            "name": "place_photo",
+            "type": "image",
+            "return_format": "array",
+            "preview_size": "medium"
+        },
+        {
+            "key": "field_eab_location",
+            "label": "Místo – mapa",
+            "name": "location",
+            "type": "google_map",
+            "center_lat": "49.8175",
+            "center_lng": "15.4730",
+            "zoom": 7,
+            "height": 320
+        },
+        {
+            "key": "field_eab_price_per_person",
+            "label": "Cena za osobu",
+            "name": "price_per_person",
+            "type": "number",
+            "min": 0,
+            "step": 1,
+            "append": "Kč"
+        },
+        {
+            "key": "field_eab_price_rules",
+            "label": "Slevy / ceník",
+            "name": "price_rules",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Přidat pravidlo",
+            "sub_fields": [
+                {
+                    "key": "field_eab_price_rule_type",
+                    "label": "Typ",
+                    "name": "rule_type",
+                    "type": "select",
+                    "choices": {
+                        "second_person": "2. osoba",
+                        "early_bird": "Early bird",
+                        "custom": "Vlastní"
+                    },
+                    "return_format": "value"
+                },
+                {
+                    "key": "field_eab_price_rule_amount",
+                    "label": "Částka",
+                    "name": "amount",
+                    "type": "number",
+                    "step": 1
+                },
+                {
+                    "key": "field_eab_price_rule_percent",
+                    "label": "Procenta",
+                    "name": "percent",
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "step": 1
+                },
+                {
+                    "key": "field_eab_price_rule_valid_until",
+                    "label": "Platí do",
+                    "name": "valid_until",
+                    "type": "date_picker",
+                    "display_format": "d.m.Y",
+                    "return_format": "Y-m-d"
+                }
+            ]
+        },
+        {
+            "key": "field_eab_capacity_regular",
+            "label": "Kapacita",
+            "name": "capacity_regular",
+            "type": "number",
+            "min": 0,
+            "default_value": 0,
+            "instructions": "0 = neomezeno"
+        },
+        {
+            "key": "field_eab_capacity_alternate",
+            "label": "Náhradníci",
+            "name": "capacity_alternate",
+            "type": "number",
+            "min": 0,
+            "default_value": 0,
+            "instructions": "0 = vypnuto"
+        },
+        {
+            "key": "field_eab_optional_services",
+            "label": "Volitelné služby",
+            "name": "optional_services",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Přidat službu",
+            "sub_fields": [
+                {
+                    "key": "field_eab_service_label",
+                    "label": "Popisek",
+                    "name": "label",
+                    "type": "text"
+                },
+                {
+                    "key": "field_eab_service_slug",
+                    "label": "Identifikátor",
+                    "name": "slug",
+                    "type": "text",
+                    "instructions": "Bez mezer, pro formulář rezervace"
+                },
+                {
+                    "key": "field_eab_service_required",
+                    "label": "Povinné",
+                    "name": "required",
+                    "type": "true_false",
+                    "ui": 1
+                },
+                {
+                    "key": "field_eab_service_price_addon",
+                    "label": "Příplatek",
+                    "name": "price_addon",
+                    "type": "number",
+                    "min": 0,
+                    "step": 1
+                }
+            ]
+        },
+        {
+            "key": "field_eab_booking_form_fields",
+            "label": "Pole formuláře účastníka",
+            "name": "booking_form_fields",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Přidat pole",
+            "sub_fields": [
+                {
+                    "key": "field_eab_bff_key",
+                    "label": "Klíč",
+                    "name": "field_key",
+                    "type": "text"
+                },
+                {
+                    "key": "field_eab_bff_label",
+                    "label": "Popisek",
+                    "name": "label",
+                    "type": "text"
+                },
+                {
+                    "key": "field_eab_bff_type",
+                    "label": "Typ",
+                    "name": "field_type",
+                    "type": "select",
+                    "choices": {
+                        "text": "Text",
+                        "date": "Datum",
+                        "textarea": "Textarea",
+                        "select": "Výběr"
+                    },
+                    "return_format": "value"
+                },
+                {
+                    "key": "field_eab_bff_required",
+                    "label": "Povinné",
+                    "name": "required",
+                    "type": "true_false",
+                    "ui": 1
+                }
+            ]
+        },
+        {
+            "key": "field_eab_instructors",
+            "label": "Instruktoři",
+            "name": "instructors",
+            "type": "relationship",
+            "post_type": ["eab_instructor"],
+            "filters": ["search"],
+            "return_format": "id",
+            "min": 0,
+            "max": ""
+        },
+        {
+            "key": "field_eab_synopsis",
+            "label": "Synopse",
+            "name": "synopsis",
+            "type": "textarea",
+            "rows": 4
+        },
+        {
+            "key": "field_eab_program",
+            "label": "Program",
+            "name": "program",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 1
+        },
+        {
+            "key": "field_eab_gallery",
+            "label": "Galerie",
+            "name": "gallery",
+            "type": "gallery",
+            "return_format": "array",
+            "preview_size": "medium"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "eab_event"
+            }
+        ],
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "eab_training"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "active": true,
+    "show_in_rest": 1,
+    "modified": 1749043200
+}

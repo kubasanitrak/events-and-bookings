@@ -4,6 +4,41 @@ WordPress plugin for events and bookings.
 
 Repository: https://github.com/kubasanitrak/events-and-bookings
 
+## Shortcodes (Phase 2)
+
+| Shortcode | Usage |
+|-----------|--------|
+| `[eab_events_grid]` | Homepage grid — `type="event\|training"`, `ids="1,2,3"`, `limit="6"`, `title="…"` |
+| `[eab_events_list]` | Full list + filters — `type="event"`, `filter_action="/akce/"`, preset `audience="deti"` |
+| `[eab_event_detail]` | Detail (on singular omit `id`) — `id="123"` |
+| `[eab_book_button]` | CTA only — `id="123"` |
+
+**URL filters** (GET): `eab_type=event|training`, `eab_publikum`, `eab_rozvrzeni`, `eab_druh`, `eab_region` (term slugs).
+
+Example list with preset filter:
+
+```
+[eab_events_list type="event" audience="deti" filter_action="https://example.test/akce/"]
+```
+
+Example homepage picks:
+
+```
+[eab_events_grid ids="12,15,18" limit="3" title="Vybrané akce"]
+```
+
+## Member auth (Phase 3)
+
+| Shortcode | Page (auto-created) |
+|-----------|---------------------|
+| `[eab_register]` | `/registrace/` |
+| `[eab_login]` | `/prihlaseni/` |
+| `[eab_set_password]` | `/nastaveni-hesla/` |
+
+Flow: register → verification e-mail → set password → login. Assign GDPR page ID in options (`eab_gdpr_page`) for consent link.
+
+Verification link format: `?eab_verify=1&eab_uid=ID&eab_token=TOKEN` (home URL or any front page).
+
 ## Composer
 
 Runtime dependencies are installed into `vendor/` and bundled in release zips (sites do not run Composer).
