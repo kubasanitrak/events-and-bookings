@@ -68,6 +68,8 @@ class EAB_Emails {
                     'method' => 'bank_transfer',
                 ), $checkout);
             }
+        } elseif ($order->payment_method === 'gopay') {
+            $payment_url = __('Platba kartou — dokončete ji na platební bráně GoPay.', 'events-and-bookings');
         }
 
         $expires = '';
@@ -165,16 +167,31 @@ class EAB_Emails {
             $order->order_number
         );
 
-        return self::mail($user->user_email, $subject, $body);
+        if (!empty($order->fakturoid_invoice_number)) {
+            $body .= "\n" . sprintf(
+                __('Faktura č. %s je v příloze.', 'events-and-bookings'),
+                $order->fakturoid_invoice_number
+            ) . "\n";
+        }
+
+        $attachments = array();
+        if (!empty($order->fakturoid_pdf)) {
+            $path = EAB_Fakturoid::absolute_path($order->fakturoid_pdf);
+            if (is_readable($path)) {
+                $attachments[] = $path;
+            }
+        }
+
+        return self::mail($user->user_email, $subject, $body, $attachments);
     }
 
-    private static function mail($to, $subject, $body) {
+    private static function mail($to, $subject, $body, $attachments = array()) {
         $headers = array('Content-Type: text/plain; charset=UTF-8');
         $from_name  = get_option('eab_email_sender_name', get_bloginfo('name'));
         $from_email = get_option('eab_email_sender_email', get_option('admin_email'));
         if ($from_email) {
             $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
         }
-        return wp_mail($to, $subject, $body, $headers);
+        return wp_mail($to, $subject, $body, $headers, $attachments);
     }
 }

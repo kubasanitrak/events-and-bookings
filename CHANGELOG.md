@@ -2,6 +2,16 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.7.0] - 2026-06-04
+
+### Added
+
+- Phase 6: GoPay card payments (OAuth2, payment create, notification + return URL handlers).
+- Fakturoid API v3 — invoice on paid order, PDF stored in uploads, e-mail attachment.
+- Payment result pages `/platba-uspesna/`, `/platba-neuspesna/` (`[eab_payment_success]`, `[eab_payment_failed]`).
+- Admin settings for GoPay credentials and Fakturoid account.
+- DB columns `fakturoid_invoice_id`, `fakturoid_invoice_number`, `fakturoid_pdf` on orders.
+
 ## [0.6.1] - 2026-06-04
 
 ### Changed

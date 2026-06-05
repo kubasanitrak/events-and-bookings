@@ -27,9 +27,26 @@ class EAB_Payments {
         }
 
         EAB_Checkout::update_order_status($order_id, 'paid', $transaction_id);
+
+        if (EAB_Fakturoid::is_enabled()) {
+            EAB_Fakturoid::create_invoice_for_order($order_id);
+        }
+
         EAB_Emails::send_payment_confirmed_email($order_id);
 
         do_action('eab_payment_completed', $order_id, $order);
+
+        return true;
+    }
+
+    public static function fail_payment($order_id, $reason = '') {
+        $order = EAB_Checkout::get_order($order_id);
+        if (!$order || in_array($order->status, array('paid', 'cancelled', 'expired', 'failed'), true)) {
+            return false;
+        }
+
+        EAB_Checkout::update_order_status($order_id, 'failed');
+        self::log('payment_failed', (string) $reason, array('order_id' => (int) $order_id));
 
         return true;
     }

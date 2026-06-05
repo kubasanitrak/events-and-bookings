@@ -10,12 +10,43 @@ if (!defined('ABSPATH')) {
 class EAB_DB {
 
     public static function maybe_upgrade() {
+        self::create_tables();
+        self::run_column_migrations();
+
         $installed = get_option('eab_db_version', '');
         if (version_compare($installed, EAB_VERSION, '>=')) {
             return;
         }
-        self::create_tables();
         update_option('eab_db_version', EAB_VERSION);
+    }
+
+    /**
+     * Add columns to existing installs (dbDelta does not alter reliably).
+     */
+    public static function run_column_migrations() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'eab_orders';
+        if (!self::table_exists('eab_orders')) {
+            return;
+        }
+
+        $columns = $wpdb->get_col("SHOW COLUMNS FROM $table", 0);
+        $add = array();
+
+        if (!in_array('fakturoid_invoice_id', $columns, true)) {
+            $add[] = 'ADD COLUMN fakturoid_invoice_id varchar(64) DEFAULT NULL';
+        }
+        if (!in_array('fakturoid_invoice_number', $columns, true)) {
+            $add[] = 'ADD COLUMN fakturoid_invoice_number varchar(32) DEFAULT NULL';
+        }
+        if (!in_array('fakturoid_pdf', $columns, true)) {
+            $add[] = 'ADD COLUMN fakturoid_pdf varchar(255) DEFAULT NULL';
+        }
+
+        foreach ($add as $sql) {
+            $wpdb->query("ALTER TABLE $table $sql");
+        }
     }
 
     public static function create_tables() {
@@ -54,6 +85,9 @@ class EAB_DB {
             updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             expires_at datetime DEFAULT NULL,
             paid_at datetime DEFAULT NULL,
+            fakturoid_invoice_id varchar(64) DEFAULT NULL,
+            fakturoid_invoice_number varchar(32) DEFAULT NULL,
+            fakturoid_pdf varchar(255) DEFAULT NULL,
             PRIMARY KEY (id),
             KEY user_id (user_id),
             KEY order_number (order_number),

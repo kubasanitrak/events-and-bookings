@@ -88,7 +88,7 @@ class EAB_Cron {
 
         $ids = $wpdb->get_col(
             "SELECT id FROM $table
-             WHERE status IN ('pending', 'awaiting_payment')
+             WHERE status IN ('pending', 'awaiting_payment', 'processing')
              AND expires_at IS NOT NULL
              AND expires_at < NOW()"
         );

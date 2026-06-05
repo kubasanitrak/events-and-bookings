@@ -104,7 +104,7 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
             <?php if ($gopay_enabled) : ?>
                 <label class="eab-radio">
-                    <input type="radio" name="payment_method" value="gopay">
+                    <input type="radio" name="payment_method" value="gopay" <?php checked(!$bank_enabled); ?>>
                     <span><?php esc_html_e('Karta (GoPay)', 'events-and-bookings'); ?></span>
                 </label>
             <?php endif; ?>

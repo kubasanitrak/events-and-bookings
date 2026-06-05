@@ -32,8 +32,11 @@ class EAB_Loader {
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-emails.php';
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-auth.php';
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-payments.php';
+        require_once EAB_PLUGIN_DIR . 'includes/class-eab-gopay.php';
+        require_once EAB_PLUGIN_DIR . 'includes/class-eab-fakturoid.php';
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-checkout.php';
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-bank-transfer.php';
+        require_once EAB_PLUGIN_DIR . 'includes/class-eab-payment-pages.php';
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-dashboard.php';
 
         require_once EAB_PLUGIN_DIR . 'includes/class-eab-qr-generator.php';
@@ -62,6 +65,8 @@ class EAB_Loader {
         new EAB_Shortcodes();
         new EAB_Auth();
         new EAB_Checkout();
+        new EAB_GoPay();
+        new EAB_Payment_Pages();
         new EAB_Dashboard();
         new EAB_Cron();
 

@@ -47,11 +47,16 @@ Verification link format: `?eab_verify=1&eab_uid=ID&eab_token=TOKEN` (home URL o
 | `[eab_dashboard]` | `/muj-ucet/` |
 | `[eab_basket_count]` | header widget |
 
-Flow: detail → **Rezervovat místo** → pokladna (účastníci, služby) → bankovní převod → potvrzení.
+Flow: detail → **Rezervovat místo** → pokladna (účastníci, služby) → bankovní převod nebo GoPay → potvrzení.
 
-Configure under **Akce a rezervace → Nastavení** (bank account, payment deadline, admin e-mails).
+Configure under **Akce a rezervace → Nastavení** (bank account, GoPay, Fakturoid, payment deadline, admin e-mails).
 
-Admin: **Objednávky** — confirm bank transfer manually (`Potvrdit platbu`). QR payment uses Paylibo API when account number + bank code are set.
+| Shortcode | Page |
+|-----------|------|
+| `[eab_payment_success]` | `/platba-uspesna/` |
+| `[eab_payment_failed]` | `/platba-neuspesna/` |
+
+Admin: **Objednávky** — confirm bank transfer manually (`Potvrdit platbu`). GoPay orders complete via gateway notification. QR payment uses Paylibo API when account number + bank code are set. Fakturoid invoice PDF is attached to payment confirmation e-mail when enabled.
 
 ## Composer
 

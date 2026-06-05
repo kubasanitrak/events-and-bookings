@@ -48,6 +48,16 @@ class EAB_Activator {
             'eab_email_sender_email'    => get_option('admin_email'),
             'eab_bank_transfer_enabled' => 1,
             'eab_gopay_enabled'           => 0,
+            'eab_gopay_test_mode'         => 1,
+            'eab_gopay_goid'              => '',
+            'eab_gopay_client_id'         => '',
+            'eab_gopay_client_secret'     => '',
+            'eab_fakturoid_enabled'       => 0,
+            'eab_fakturoid_slug'          => '',
+            'eab_fakturoid_email'         => '',
+            'eab_fakturoid_api_token'     => '',
+            'eab_fakturoid_user_agent'    => 'Events and Bookings (kubasanitrak)',
+            'eab_fakturoid_vat_rate'      => 21,
             'eab_order_expiry_hours'      => 24,
             'eab_bank_account_name'       => '',
             'eab_bank_account_number'     => '',
@@ -97,6 +107,16 @@ class EAB_Activator {
                 'slug'    => 'pokladna',
                 'content' => '[eab_checkout]',
             ),
+            'payment_success' => array(
+                'title'   => __('Platba úspěšná', 'events-and-bookings'),
+                'slug'    => 'platba-uspesna',
+                'content' => '[eab_payment_success]',
+            ),
+            'payment_failed' => array(
+                'title'   => __('Platba neúspěšná', 'events-and-bookings'),
+                'slug'    => 'platba-neuspesna',
+                'content' => '[eab_payment_failed]',
+            ),
         );
 
         $page_ids = get_option('eab_page_ids', array());
@@ -137,7 +157,9 @@ class EAB_Activator {
     public static function maybe_create_pages() {
         $ids = get_option('eab_page_ids', array());
         if (!is_array($ids) || empty($ids['login']) || !get_post($ids['login'])
-            || empty($ids['checkout']) || !get_post($ids['checkout'])) {
+            || empty($ids['checkout']) || !get_post($ids['checkout'])
+            || empty($ids['payment_success']) || !get_post($ids['payment_success'])
+            || empty($ids['payment_failed']) || !get_post($ids['payment_failed'])) {
             self::create_pages();
         }
     }

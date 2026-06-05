@@ -42,8 +42,8 @@ class EAB_Checkout {
         $saved_invoice = EAB_Invoice::get_user_invoice_data($user_id);
         $has_saved_invoice = EAB_Invoice::user_has_saved_invoice($user_id);
         $terms_page = (int) get_option('eab_terms_page', 0);
-        $bank_enabled = (bool) get_option('eab_bank_transfer_enabled', 1);
-        $gopay_enabled = (bool) get_option('eab_gopay_enabled', 0);
+        $bank_enabled  = (bool) get_option('eab_bank_transfer_enabled', 1);
+        $gopay_enabled = EAB_GoPay::is_enabled();
 
         ob_start();
         include EAB_PLUGIN_DIR . 'public/partials/checkout-page.php';
@@ -100,8 +100,8 @@ class EAB_Checkout {
             wp_send_json_error(array('message' => __('Platba převodem není dostupná.', 'events-and-bookings')));
         }
 
-        if ($payment_method === 'gopay') {
-            wp_send_json_error(array('message' => __('Platba kartou bude dostupná brzy.', 'events-and-bookings')));
+        if ($payment_method === 'gopay' && !EAB_GoPay::is_enabled()) {
+            wp_send_json_error(array('message' => __('Platba kartou není dostupná.', 'events-and-bookings')));
         }
 
         $terms_page = (int) get_option('eab_terms_page', 0);
@@ -142,16 +142,30 @@ class EAB_Checkout {
             wp_send_json_error(array('message' => __('Objednávku se nepodařilo vytvořit.', 'events-and-bookings')));
         }
 
-        EAB_Bank_Transfer::process_order($order_id);
+        if ($payment_method === 'bank_transfer') {
+            EAB_Bank_Transfer::process_order($order_id);
+            EAB_Emails::send_order_placed_email($order_id);
+
+            $checkout_url = EAB_Auth::get_page_url('checkout');
+            wp_send_json_success(array(
+                'redirect' => add_query_arg(array(
+                    'order'  => $order_id,
+                    'method' => 'bank_transfer',
+                ), $checkout_url ?: home_url('/')),
+            ));
+        }
+
         EAB_Emails::send_order_placed_email($order_id);
 
-        $checkout_url = EAB_Auth::get_page_url('checkout');
-        wp_send_json_success(array(
-            'redirect' => add_query_arg(array(
-                'order'  => $order_id,
-                'method' => 'bank_transfer',
-            ), $checkout_url ?: home_url('/')),
-        ));
+        $gopay  = new EAB_GoPay();
+        $result = $gopay->create_payment($order_id);
+
+        if (!empty($result['error'])) {
+            self::cancel_order($order_id);
+            wp_send_json_error(array('message' => $result['error']));
+        }
+
+        wp_send_json_success(array('redirect' => $result['redirect']));
     }
 
     /**
@@ -353,5 +367,20 @@ class EAB_Checkout {
             $format,
             array('%d')
         );
+    }
+
+    public static function get_order_by_transaction($transaction_id) {
+        global $wpdb;
+
+        if ($transaction_id === '') {
+            return null;
+        }
+
+        $order_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}eab_orders WHERE transaction_id = %s LIMIT 1",
+            $transaction_id
+        ));
+
+        return $order_id ? self::get_order($order_id) : null;
     }
 }

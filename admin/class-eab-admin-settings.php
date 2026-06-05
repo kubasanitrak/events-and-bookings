@@ -20,6 +20,16 @@ class EAB_Admin_Settings {
             EAB_Settings::OPT_CHECKOUT_INVOICE_ENABLED,
             'eab_bank_transfer_enabled',
             'eab_gopay_enabled',
+            'eab_gopay_test_mode',
+            'eab_gopay_goid',
+            'eab_gopay_client_id',
+            'eab_gopay_client_secret',
+            'eab_fakturoid_enabled',
+            'eab_fakturoid_slug',
+            'eab_fakturoid_email',
+            'eab_fakturoid_api_token',
+            'eab_fakturoid_user_agent',
+            'eab_fakturoid_vat_rate',
             'eab_order_expiry_hours',
             'eab_order_expiry_notification',
             'eab_basket_cleanup_hours',
@@ -144,9 +154,62 @@ class EAB_Admin_Settings {
                         <th><?php esc_html_e('GoPay', 'events-and-bookings'); ?></th>
                         <td>
                             <input type="hidden" name="eab_gopay_enabled" value="0">
-                            <label><input type="checkbox" name="eab_gopay_enabled" value="1" <?php checked(get_option('eab_gopay_enabled', 0)); ?> disabled>
-                                <?php esc_html_e('Fáze 6', 'events-and-bookings'); ?></label>
+                            <label><input type="checkbox" name="eab_gopay_enabled" value="1" <?php checked(get_option('eab_gopay_enabled', 0)); ?>>
+                                <?php esc_html_e('Povolit platbu kartou', 'events-and-bookings'); ?></label>
                         </td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_gopay_goid">GoID</label></th>
+                        <td><input type="text" class="regular-text" id="eab_gopay_goid" name="eab_gopay_goid" value="<?php echo esc_attr(get_option('eab_gopay_goid', '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_gopay_client_id"><?php esc_html_e('Client ID', 'events-and-bookings'); ?></label></th>
+                        <td><input type="text" class="regular-text" id="eab_gopay_client_id" name="eab_gopay_client_id" value="<?php echo esc_attr(get_option('eab_gopay_client_id', '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_gopay_client_secret"><?php esc_html_e('Client Secret', 'events-and-bookings'); ?></label></th>
+                        <td><input type="password" class="regular-text" id="eab_gopay_client_secret" name="eab_gopay_client_secret" value="<?php echo esc_attr(get_option('eab_gopay_client_secret', '')); ?>" autocomplete="new-password"></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('GoPay režim', 'events-and-bookings'); ?></th>
+                        <td>
+                            <input type="hidden" name="eab_gopay_test_mode" value="0">
+                            <label><input type="checkbox" name="eab_gopay_test_mode" value="1" <?php checked(get_option('eab_gopay_test_mode', 1)); ?>>
+                                <?php esc_html_e('Sandbox (testovací brána)', 'events-and-bookings'); ?></label>
+                            <p class="description"><?php esc_html_e('Notifikační URL:', 'events-and-bookings'); ?> <code><?php echo esc_html(EAB_GoPay::get_notification_url()); ?></code></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2><?php esc_html_e('Fakturoid', 'events-and-bookings'); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th><?php esc_html_e('Fakturace', 'events-and-bookings'); ?></th>
+                        <td>
+                            <input type="hidden" name="eab_fakturoid_enabled" value="0">
+                            <label><input type="checkbox" name="eab_fakturoid_enabled" value="1" <?php checked(get_option('eab_fakturoid_enabled', 0)); ?>>
+                                <?php esc_html_e('Vystavit fakturu po zaplacení', 'events-and-bookings'); ?></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_slug"><?php esc_html_e('Slug účtu', 'events-and-bookings'); ?></label></th>
+                        <td><input type="text" class="regular-text" id="eab_fakturoid_slug" name="eab_fakturoid_slug" value="<?php echo esc_attr(get_option('eab_fakturoid_slug', '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_email">E-mail</label></th>
+                        <td><input type="email" class="regular-text" id="eab_fakturoid_email" name="eab_fakturoid_email" value="<?php echo esc_attr(get_option('eab_fakturoid_email', '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_api_token">API token</label></th>
+                        <td><input type="password" class="regular-text" id="eab_fakturoid_api_token" name="eab_fakturoid_api_token" value="<?php echo esc_attr(get_option('eab_fakturoid_api_token', '')); ?>" autocomplete="new-password"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_user_agent">User-Agent</label></th>
+                        <td><input type="text" class="regular-text" id="eab_fakturoid_user_agent" name="eab_fakturoid_user_agent" value="<?php echo esc_attr(get_option('eab_fakturoid_user_agent', 'Events and Bookings (kubasanitrak)')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_vat_rate"><?php esc_html_e('Sazba DPH (%)', 'events-and-bookings'); ?></label></th>
+                        <td><input type="number" min="0" max="100" class="small-text" id="eab_fakturoid_vat_rate" name="eab_fakturoid_vat_rate" value="<?php echo esc_attr(get_option('eab_fakturoid_vat_rate', 21)); ?>"></td>
                     </tr>
                 </table>
 
