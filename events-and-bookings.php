@@ -3,7 +3,7 @@
  * Plugin Name: Events and Bookings
  * Plugin URI: https://github.com/kubasanitrak/events-and-bookings
  * Description: Akce, tréninky a rezervace pro WordPress.
- * Version: 0.7.0
+ * Version: 0.7.1
  * Author: kubasanitrak
  * Author URI: https://github.com/kubasanitrak
  * License: GPL-2.0+
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('EAB_VERSION', '0.7.0');
+define('EAB_VERSION', '0.7.1');
 
 /** Save ACF field group exports into plugin `acf-json/` (set false to disable). */
 if (!defined('EAB_ACF_SAVE_JSON')) {

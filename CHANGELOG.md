@@ -2,6 +2,12 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.7.1] - 2026-06-04
+
+### Changed
+
+- Version bump.
+
 ## [0.7.0] - 2026-06-04
 
 ### Added
