@@ -79,6 +79,7 @@ class EAB_Loader {
             new EAB_Admin_Settings();
             new EAB_Admin_Orders();
             add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+            add_action('admin_enqueue_scripts', array('EAB_Admin_Settings', 'enqueue_gopay_test_script'));
         }
 
         new EAB_Public();

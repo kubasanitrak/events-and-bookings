@@ -58,6 +58,8 @@ Configure under **Akce a rezervace → Nastavení** (bank account, GoPay, Faktur
 
 Admin: **Objednávky** — confirm bank transfer manually (`Potvrdit platbu`). GoPay orders complete via gateway notification. QR payment uses Paylibo API when account number + bank code are set. Fakturoid invoice PDF is attached to payment confirmation e-mail when enabled.
 
+**GoPay sandbox testing:** see [docs/gopay-sandbox-testing.md](docs/gopay-sandbox-testing.md). In **Nastavení → GoPay**, use **Otestovat připojení** for OAuth + callback URL preview.
+
 ## Composer
 
 Runtime dependencies are installed into `vendor/` and bundled in release zips (sites do not run Composer).

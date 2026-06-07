@@ -201,6 +201,116 @@ class EAB_GoPay {
         return add_query_arg('order', (int) $order_id, $url);
     }
 
+    /**
+     * Admin connectivity probe: OAuth + resolved callback URLs.
+     *
+     * @return array<string,mixed>
+     */
+    public static function run_connectivity_test() {
+        $info = self::get_connectivity_info();
+
+        if (!get_option('eab_gopay_client_id', '') || !get_option('eab_gopay_client_secret', '')) {
+            $info['oauth'] = array(
+                'ok'      => false,
+                'message' => __('Vyplňte Client ID a Client Secret.', 'events-and-bookings'),
+            );
+            return $info;
+        }
+
+        $info['oauth'] = self::probe_oauth();
+        return $info;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public static function get_connectivity_info() {
+        $page_ids = get_option('eab_page_ids', array());
+
+        return array(
+            'api_url'          => self::gateway_url(),
+            'test_mode'        => (bool) get_option('eab_gopay_test_mode', 1),
+            'site_url'         => home_url('/'),
+            'notification_url' => self::get_notification_url(),
+            'return_url_sample' => self::get_return_url(1),
+            'failed_url_sample' => self::get_failed_url(1),
+            'payment_success_page' => self::get_page_status('payment_success', $page_ids),
+            'payment_failed_page'  => self::get_page_status('payment_failed', $page_ids),
+            'checkout_ready'       => self::is_enabled(),
+            'credentials' => array(
+                'enabled'       => (bool) get_option('eab_gopay_enabled', 0),
+                'goid'          => (string) get_option('eab_gopay_goid', ''),
+                'has_client_id' => (bool) get_option('eab_gopay_client_id', ''),
+                'has_secret'    => (bool) get_option('eab_gopay_client_secret', ''),
+            ),
+            'docs' => 'docs/gopay-sandbox-testing.md',
+        );
+    }
+
+    /**
+     * @param array<string,int> $page_ids
+     * @return array<string,mixed>
+     */
+    private static function get_page_status($key, $page_ids) {
+        $id   = isset($page_ids[$key]) ? (int) $page_ids[$key] : 0;
+        $post = $id ? get_post($id) : null;
+
+        return array(
+            'id'   => $id,
+            'slug' => $post ? $post->post_name : '',
+            'url'  => $id ? get_permalink($id) : '',
+            'ok'   => $post && $post->post_status === 'publish',
+        );
+    }
+
+    /**
+     * @return array{ok:bool,message:string,expires_in?:int}
+     */
+    private static function probe_oauth() {
+        $client_id     = get_option('eab_gopay_client_id', '');
+        $client_secret = get_option('eab_gopay_client_secret', '');
+
+        $response = wp_remote_post(self::gateway_url() . '/oauth2/token', array(
+            'timeout' => 30,
+            'headers' => array(
+                'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
+                'Accept'        => 'application/json',
+                'Content-Type'  => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'grant_type' => 'client_credentials',
+                'scope'      => 'payment-all',
+            ),
+        ));
+
+        if (is_wp_error($response)) {
+            return array(
+                'ok'      => false,
+                'message' => $response->get_error_message(),
+            );
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code >= 200 && $code < 300 && !empty($body['access_token'])) {
+            return array(
+                'ok'         => true,
+                'message'    => __('OAuth2 token získán.', 'events-and-bookings'),
+                'expires_in' => isset($body['expires_in']) ? (int) $body['expires_in'] : null,
+            );
+        }
+
+        $message = isset($body['errors'][0]['message'])
+            ? $body['errors'][0]['message']
+            : sprintf(__('OAuth selhalo (HTTP %d).', 'events-and-bookings'), $code);
+
+        return array(
+            'ok'      => false,
+            'message' => $message,
+        );
+    }
+
     private function get_access_token() {
         $cached = get_transient('eab_gopay_access_token');
         if ($cached) {

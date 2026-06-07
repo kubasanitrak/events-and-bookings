@@ -12,6 +12,7 @@ class EAB_Admin_Settings {
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'), 12);
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('wp_ajax_eab_gopay_test_connectivity', array($this, 'ajax_gopay_test_connectivity'));
     }
 
     public function register_settings() {
@@ -177,6 +178,22 @@ class EAB_Admin_Settings {
                             <label><input type="checkbox" name="eab_gopay_test_mode" value="1" <?php checked(get_option('eab_gopay_test_mode', 1)); ?>>
                                 <?php esc_html_e('Sandbox (testovací brána)', 'events-and-bookings'); ?></label>
                             <p class="description"><?php esc_html_e('Notifikační URL:', 'events-and-bookings'); ?> <code><?php echo esc_html(EAB_GoPay::get_notification_url()); ?></code></p>
+                            <p>
+                                <button type="button" class="button" id="eab-gopay-test-connectivity">
+                                    <?php esc_html_e('Otestovat připojení', 'events-and-bookings'); ?>
+                                </button>
+                                <span class="description"><?php esc_html_e('OAuth2 ping a náhled URL (uložte nastavení před testem).', 'events-and-bookings'); ?></span>
+                            </p>
+                            <p class="description">
+                                <?php
+                                printf(
+                                    /* translators: %s: relative path to doc */
+                                    esc_html__('Podrobný checklist: %s', 'events-and-bookings'),
+                                    '<code>docs/gopay-sandbox-testing.md</code>'
+                                );
+                                ?>
+                            </p>
+                            <div id="eab-gopay-test-output" class="eab-gopay-test-output" aria-live="polite"></div>
                         </td>
                     </tr>
                 </table>
@@ -237,5 +254,56 @@ class EAB_Admin_Settings {
             </form>
         </div>
         <?php
+    }
+
+    public function ajax_gopay_test_connectivity() {
+        check_ajax_referer('eab_gopay_test', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Nedostatečná oprávnění.', 'events-and-bookings')));
+        }
+
+        wp_send_json_success(EAB_GoPay::run_connectivity_test());
+    }
+
+    public static function enqueue_gopay_test_script($hook) {
+        if ($hook !== 'eab-main-menu_page_eab-settings') {
+            return;
+        }
+
+        wp_enqueue_script(
+            'eab-settings-gopay-test',
+            EAB_PLUGIN_URL . 'admin/js/settings-gopay-test.js',
+            array('jquery'),
+            EAB_VERSION,
+            true
+        );
+
+        wp_localize_script('eab-settings-gopay-test', 'eabGopayTest', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('eab_gopay_test'),
+            'i18n'    => array(
+                'running'          => __('Testuji připojení…', 'events-and-bookings'),
+                'error'            => __('Test selhal.', 'events-and-bookings'),
+                'results'          => __('Výsledek testu GoPay', 'events-and-bookings'),
+                'oauth'            => __('OAuth2', 'events-and-bookings'),
+                'expires'          => __('platnost', 'events-and-bookings'),
+                'mode'             => __('Režim', 'events-and-bookings'),
+                'sandbox'          => __('Sandbox', 'events-and-bookings'),
+                'production'       => __('Produkce', 'events-and-bookings'),
+                'api'              => __('API URL', 'events-and-bookings'),
+                'site'             => __('Adresa webu', 'events-and-bookings'),
+                'notify'           => __('Notifikační URL', 'events-and-bookings'),
+                'return'           => __('Return URL (vzor)', 'events-and-bookings'),
+                'failed'           => __('Failed URL (vzor)', 'events-and-bookings'),
+                'successPage'      => __('Stránka úspěchu', 'events-and-bookings'),
+                'failedPage'       => __('Stránka neúspěchu', 'events-and-bookings'),
+                'goid'             => __('GoID', 'events-and-bookings'),
+                'checkout'         => __('Pokladna – karta', 'events-and-bookings'),
+                'checkoutReady'    => __('připraveno', 'events-and-bookings'),
+                'checkoutNotReady' => __('chybí nastavení', 'events-and-bookings'),
+                'docs'             => __('Kompletní postup testování je v docs/gopay-sandbox-testing.md v repozitáři pluginu.', 'events-and-bookings'),
+            ),
+        ));
     }
 }

@@ -33,3 +33,38 @@
   padding: 8px;
   background: #fff;
 }
+
+.eab-gopay-test-output {
+  margin-top: 0.75rem;
+  max-width: 52rem;
+}
+
+.eab-gopay-test__result {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  padding: 1rem 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.eab-gopay-test__result h3 {
+  margin: 0 0 0.75rem;
+}
+
+.eab-gopay-test__table th {
+  width: 11rem;
+  vertical-align: top;
+}
+
+.eab-gopay-test__table code {
+  word-break: break-all;
+}
+
+.eab-gopay-test__ok {
+  color: #1e6b2e;
+  font-weight: 600;
+}
+
+.eab-gopay-test__fail {
+  color: #8a2424;
+  font-weight: 600;
+}

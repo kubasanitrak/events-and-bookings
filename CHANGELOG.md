@@ -2,11 +2,18 @@
 
 All notable changes to Events and Bookings are documented here.
 
-## [0.7.1] - 2026-06-04
+## [0.7.2] - 2026-06-04
 
 ### Changed
 
 - Version bump.
+
+## [0.7.1] - 2026-06-04
+
+### Added
+
+- GoPay sandbox testing guide: `docs/gopay-sandbox-testing.md`.
+- Admin **Otestovat připojení** on settings page (OAuth2 probe + resolved callback URLs).
 
 ## [0.7.0] - 2026-06-04
 
