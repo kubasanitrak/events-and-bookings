@@ -17,7 +17,7 @@ $card_layout = ($layout === 'list') ? 'list' : 'grid';
 <div class="eab-listing eab-listing--grid">
     <?php if (!empty($title)) : ?>
         <header class="eab-listing__header">
-            <h2 class="eab-listing__title"><?php echo esc_html($title); ?></h2>
+            <h5 class="section-headline caps eab-listing__title"><?php echo esc_html($title); ?></h5>
         </header>
     <?php endif; ?>
 
