@@ -20,19 +20,29 @@ $schedule = EAB_Event::get_schedule_summary($post_id);
 $price    = EAB_Event::get_price_label($post_id);
 $img_id   = EAB_Event::get_tile_image_id($post_id);
 ?>
+<section class="eab-detail__section eab-detail__header">
+    <?php 
+        if ( function_exists('get_field') && get_field('one_off_date') ) :
+        ?>
+            <h5 class="eab-item--subtitle"><?php echo get_field('one_off_date'); ?></h5>
+
+    <?php
+        endif;
+    ?>
+</section>
 <section class="eab-detail__section even-cols" id="eab-detail-<?php echo esc_attr($post_id); ?>">
-    <div class="eab-detail__col even-cols--item">
-        <h1 class="eab-detail__title"><?php echo esc_html(get_the_title($post_id)); ?></h1>
+    <div class="eab-detail__col even-cols--item border-T">
+        <h2 class="eab-detail__title"><?php echo esc_html(get_the_title($post_id)); ?></h2>
     </div>
-    <div class="eab-detail__col even-cols--item">
+    <div class="eab-detail__col even-cols--item border-T">
         <?php $synopsis = get_field('synopsis', $post_id); 
         if ($synopsis) : ?>
-            <h5 class="eab-item--subtitle border-B"><?php esc_html_e('Synopse', 'events-and-bookings'); ?></h5>
+            <!-- <h5 class="eab-item--subtitle border-B"><?php #esc_html_e('Synopse', 'events-and-bookings'); ?></h5> -->
             <div class="eab-detail__prose"><?php echo wp_kses_post(wpautop($synopsis)); ?></div>
         <?php endif; ?>
     </div>
 </section>
-<section class="eab-detail__section even-cols full-width" data-theme="silky-blue">
+<section class="eab-detail__section even-cols pad-B pad-T" >
     <div class="eab-detail__col even-cols--item">
         <?php if ($img_id) : ?>
             <figure class="eab-detail__hero">
@@ -139,7 +149,7 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
 
     
 
-<section class="eab-detail__section even-cols full-width" data-theme="silky-blue">
+<section class="eab-detail__section even-cols pad-B pad-T" data-theme="silky-blue">
     <div class="eab-detail__col even-cols--item">
         <h5 class="eab-item--subtitle border-B caps"><?php esc_html_e('O Kempu', 'events-and-bookings'); ?></h5>
         <?php echo apply_filters('the_content', $post->post_content); ?>
@@ -158,7 +168,7 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
     endif; ?>
 </section>
 
-<section class="eab-detail__section even-cols full-width" data-theme="silky-blue">
+<section class="eab-detail__section even-cols pad-B pad-T" data-theme="silky-blue">
     <div class="eab-detail__col even-cols--item">
         <h5 class="eab-item--subtitle border-B caps"><?php esc_html_e('Účastníci', 'events-and-bookings'); ?></h5>
             <?php if ($show_attendees && EAB_Access::can_view_attendee_list($post_id)) : ?>
@@ -178,21 +188,16 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
         <?php endif; ?>
     </div>
 </section>
-<section class="eab-detail__section even-cols full-width" data-theme="default">
-    <?php if ($show_gallery && function_exists('get_field')) :
-        $gallery = get_field('gallery', $post_id);
-        if (!empty($gallery) && is_array($gallery)) : ?>
-            <section class="eab-detail__section eab-detail__gallery">
-                <h2><?php esc_html_e('Galerie', 'events-and-bookings'); ?></h2>
-                <div class="eab-gallery">
-                    <?php foreach ($gallery as $image) :
-                        $id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
-                        if ($id) {
-                            echo wp_get_attachment_image($id, 'medium_large', false, array('class' => 'eab-gallery__img', 'loading' => 'lazy'));
-                        }
-                    endforeach; ?>
-                </div>
-            </section>
-        <?php endif;
-    endif; ?>
-</section>
+<?php if ($show_gallery && function_exists('get_field')) :
+    $gallery = get_field('gallery', $post_id);
+    if (!empty($gallery) && is_array($gallery)) : ?>
+        <section class="eab-detail__section eab-detail__gallery" data-theme="default">
+            <?php foreach ($gallery as $image) :
+                $id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
+                if ($id) :
+                    echo wp_get_attachment_image($id, 'medium_large', false, array('class' => 'eab-gallery__img', 'loading' => 'lazy'));
+                endif;
+            endforeach; ?>
+        </section>
+    <?php endif;
+endif; ?>
