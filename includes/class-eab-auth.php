@@ -36,11 +36,45 @@ class EAB_Auth {
     public function __construct() {
         add_action('init', array($this, 'handle_verification_link'), 5);
         add_action('init', array($this, 'handle_form_posts'), 6);
+        add_action('template_redirect', array($this, 'redirect_logged_in_from_register'));
+        add_action('login_init', array($this, 'redirect_wp_register'));
+        add_filter('register_url', array($this, 'filter_register_url'));
         add_filter('authenticate', array($this, 'block_unverified_login'), 30, 3);
         add_shortcode('eab_register', array($this, 'shortcode_register'));
         add_shortcode('eab_login', array($this, 'shortcode_login'));
         add_shortcode('eab_set_password', array($this, 'shortcode_set_password'));
         add_filter('eab_enqueue_public_assets', array($this, 'enqueue_assets_flag'));
+    }
+
+    public function redirect_wp_register() {
+        if (isset($_GET['action']) && 'register' === $_GET['action']) {
+            $url = self::get_page_url('register');
+            if ($url) {
+                wp_safe_redirect($url);
+                exit;
+            }
+        }
+    }
+
+    public function filter_register_url($url) {
+        $custom = self::get_page_url('register');
+        return $custom ?: $url;
+    }
+
+    public function redirect_logged_in_from_register() {
+        if (!is_user_logged_in()) {
+            return;
+        }
+
+        $page_ids = get_option('eab_page_ids', array());
+        $register_id = is_array($page_ids) ? (int) ($page_ids['register'] ?? 0) : 0;
+        if (!$register_id || !is_page($register_id)) {
+            return;
+        }
+
+        $dashboard = self::get_page_url('dashboard');
+        wp_safe_redirect($dashboard ?: home_url('/'));
+        exit;
     }
 
     public function enqueue_assets_flag($load) {
@@ -69,6 +103,45 @@ class EAB_Auth {
             }
         }
         return '';
+    }
+
+    public static function get_terms_url() {
+        $terms_page = (int) get_option('eab_terms_page', 0);
+        if ($terms_page) {
+            $url = get_permalink($terms_page);
+            if ($url) {
+                return $url;
+            }
+        }
+
+        $terms_page = get_page_by_path('podminky');
+        if ($terms_page) {
+            return get_permalink($terms_page);
+        }
+
+        $privacy = get_privacy_policy_url();
+        return $privacy ?: home_url('/');
+    }
+
+    /**
+     * Generate a unique username from e-mail local part.
+     */
+    public static function generate_username($email) {
+        $base = sanitize_user(current(explode('@', $email)), true);
+
+        if ($base === '') {
+            $base = 'user';
+        }
+
+        $username = $base;
+        $suffix   = 1;
+
+        while (username_exists($username)) {
+            $username = $base . $suffix;
+            ++$suffix;
+        }
+
+        return $username;
     }
 
     public static function is_email_verified($user_id) {
@@ -236,42 +309,50 @@ class EAB_Auth {
      * @return int|WP_Error user ID
      */
     public static function register_member($data) {
-        $first   = isset($data['eab_first_name']) ? sanitize_text_field(wp_unslash($data['eab_first_name'])) : '';
-        $last    = isset($data['eab_last_name']) ? sanitize_text_field(wp_unslash($data['eab_last_name'])) : '';
-        $dob     = isset($data['eab_dob']) ? sanitize_text_field(wp_unslash($data['eab_dob'])) : '';
-        $email   = isset($data['eab_email']) ? sanitize_email(wp_unslash($data['eab_email'])) : '';
-        $login   = isset($data['eab_username']) ? sanitize_user(wp_unslash($data['eab_username']), true) : '';
-        $phone   = isset($data['eab_phone']) ? sanitize_text_field(wp_unslash($data['eab_phone'])) : '';
-        $gdpr    = !empty($data['eab_gdpr']);
-        $newsletter = !empty($data['eab_newsletter']);
+        $first = isset($data['first_name']) ? sanitize_text_field(wp_unslash($data['first_name']))
+            : (isset($data['eab_first_name']) ? sanitize_text_field(wp_unslash($data['eab_first_name'])) : '');
+        $last = isset($data['last_name']) ? sanitize_text_field(wp_unslash($data['last_name']))
+            : (isset($data['eab_last_name']) ? sanitize_text_field(wp_unslash($data['eab_last_name'])) : '');
+        $dob = isset($data['birth_date']) ? sanitize_text_field(wp_unslash($data['birth_date']))
+            : (isset($data['eab_dob']) ? sanitize_text_field(wp_unslash($data['eab_dob'])) : '');
+        $email = isset($data['email']) ? sanitize_email(wp_unslash($data['email']))
+            : (isset($data['eab_email']) ? sanitize_email(wp_unslash($data['eab_email'])) : '');
+        $phone = isset($data['phone']) ? sanitize_text_field(wp_unslash($data['phone']))
+            : (isset($data['eab_phone']) ? sanitize_text_field(wp_unslash($data['eab_phone'])) : '');
+        $gdpr = !empty($data['agreement']) || !empty($data['eab_gdpr']);
+        $newsletter = !empty($data['newsletter']) || !empty($data['eab_newsletter']);
 
-        if ($first === '' || $last === '' || $email === '' || $login === '' || $phone === '') {
-            return new WP_Error('missing_fields', __('Vyplňte prosím všechna povinná pole.', 'events-and-bookings'));
+        if ($first === '') {
+            return new WP_Error('first_name', __('Vyplňte prosím jméno.', 'events-and-bookings'));
         }
-
-        if (!is_email($email)) {
-            return new WP_Error('invalid_email', __('Neplatný e-mail.', 'events-and-bookings'));
+        if ($last === '') {
+            return new WP_Error('last_name', __('Vyplňte prosím příjmení.', 'events-and-bookings'));
         }
-
-        if (!validate_username($login)) {
-            return new WP_Error('invalid_username', __('Neplatné uživatelské jméno.', 'events-and-bookings'));
+        if ($email === '' || !is_email($email)) {
+            return new WP_Error('email', __('Zadejte platný e-mail.', 'events-and-bookings'));
         }
-
         if (email_exists($email)) {
-            return new WP_Error('email_exists', __('Tento e-mail je již registrován.', 'events-and-bookings'));
+            return new WP_Error('email_exists', __('Účet s tímto e-mailem již existuje.', 'events-and-bookings'));
         }
-
-        if (username_exists($login)) {
-            return new WP_Error('username_exists', __('Toto uživatelské jméno je obsazené.', 'events-and-bookings'));
+        if ($phone === '') {
+            return new WP_Error('phone', __('Vyplňte prosím telefon.', 'events-and-bookings'));
         }
-
         if (!$gdpr) {
-            return new WP_Error('gdpr_required', __('Musíte souhlasit se zpracováním osobních údajů.', 'events-and-bookings'));
+            return new WP_Error('agreement', __('Musíte souhlasit s podmínkami.', 'events-and-bookings'));
+        }
+
+        $login = isset($data['eab_username']) ? sanitize_user(wp_unslash($data['eab_username']), true) : '';
+        if ($login === '') {
+            $login = self::generate_username($email);
+        } elseif (!validate_username($login)) {
+            return new WP_Error('invalid_username', __('Neplatné uživatelské jméno.', 'events-and-bookings'));
+        } elseif (username_exists($login)) {
+            return new WP_Error('username_exists', __('Toto uživatelské jméno je obsazené.', 'events-and-bookings'));
         }
 
         $dob_normalized = self::normalize_dob($dob);
         if (is_wp_error($dob_normalized)) {
-            return $dob_normalized;
+            return new WP_Error('birth_date', __('Zadejte platné datum narození (dd.mm.rrrr).', 'events-and-bookings'));
         }
 
         $temp_password = wp_generate_password(24, true, true);
@@ -286,7 +367,7 @@ class EAB_Auth {
         ));
 
         if (is_wp_error($user_id)) {
-            return $user_id;
+            return new WP_Error('registration_failed', __('Registraci se nepodařilo dokončit. Zkuste to prosím znovu.', 'events-and-bookings'));
         }
 
         update_user_meta($user_id, self::META_FIRST_NAME, $first);
@@ -446,13 +527,13 @@ class EAB_Auth {
     }
 
     public function shortcode_register() {
-        if (is_user_logged_in()) {
-            return '<p class="eab-auth-notice">' . esc_html__('Jste již přihlášeni.', 'events-and-bookings') . '</p>';
-        }
-
         ob_start();
+        echo '<div class="auth-page" data-theme="ochre">';
+        echo '<section class="auth-section section full-width">';
         $this->render_messages();
         include EAB_PLUGIN_DIR . 'public/partials/register-form.php';
+        echo '</section>';
+        echo '</div>';
         return ob_get_clean();
     }
 
@@ -498,7 +579,14 @@ class EAB_Auth {
             'verified'          => __('E-mail byl ověřen. Nastavte si heslo níže.', 'events-and-bookings'),
             'password_set'      => __('Heslo bylo uloženo. Nyní se můžete přihlásit.', 'events-and-bookings'),
             'invalid_nonce'     => __('Platnost formuláře vypršela. Odešlete ho znovu.', 'events-and-bookings'),
-            'email_exists'      => __('Tento e-mail je již registrován.', 'events-and-bookings'),
+            'first_name'        => __('Vyplňte prosím jméno.', 'events-and-bookings'),
+            'last_name'         => __('Vyplňte prosím příjmení.', 'events-and-bookings'),
+            'birth_date'        => __('Zadejte platné datum narození (dd.mm.rrrr).', 'events-and-bookings'),
+            'email'             => __('Zadejte platný e-mail.', 'events-and-bookings'),
+            'email_exists'      => __('Účet s tímto e-mailem již existuje.', 'events-and-bookings'),
+            'phone'             => __('Vyplňte prosím telefon.', 'events-and-bookings'),
+            'agreement'         => __('Musíte souhlasit s podmínkami.', 'events-and-bookings'),
+            'registration_failed' => __('Registraci se nepodařilo dokončit. Zkuste to prosím znovu.', 'events-and-bookings'),
             'username_exists'   => __('Toto uživatelské jméno je obsazené.', 'events-and-bookings'),
             'gdpr_required'     => __('Musíte souhlasit se zpracováním osobních údajů.', 'events-and-bookings'),
             'missing_fields'    => __('Vyplňte prosím všechna povinná pole.', 'events-and-bookings'),
@@ -511,7 +599,9 @@ class EAB_Auth {
         if (!empty($_GET['eab_auth_success'])) {
             $code = sanitize_key(wp_unslash($_GET['eab_auth_success']));
             if (isset($codes[$code])) {
-                echo '<p class="eab-auth-notice eab-auth-notice--success">' . esc_html($codes[$code]) . '</p>';
+                echo '<div class="auth-notice auth-notice--success" role="status">';
+                echo '<p>' . esc_html($codes[$code]) . '</p>';
+                echo '</div>';
             }
         }
 
@@ -520,7 +610,9 @@ class EAB_Auth {
             $msg  = !empty($_GET['eab_auth_message'])
                 ? sanitize_text_field(rawurldecode(wp_unslash($_GET['eab_auth_message'])))
                 : (isset($codes[$code]) ? $codes[$code] : __('Došlo k chybě.', 'events-and-bookings'));
-            echo '<p class="eab-auth-notice eab-auth-notice--error">' . esc_html($msg) . '</p>';
+            echo '<div class="auth-notice auth-notice--error" role="alert">';
+            echo '<p>' . esc_html($msg) . '</p>';
+            echo '</div>';
         }
     }
 }
