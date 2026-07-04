@@ -23,7 +23,10 @@
 .auth-form {
 	width: 100%;
 	max-width: initial;
-	width: calc((100% - (var(--gap) * 5)) / 3 * 2);
+	width: 100%;
+	@include mq(mq-land) {
+		width: calc((100% - (var(--gap) * 5)) / 3 * 2);
+	}
 
 	&__title {
 		text-align: center;
@@ -34,12 +37,16 @@
 	}
 
 	&__row {
-		margin-bottom: var(--gap);
+		&:not(.auth-form__row--wrap-on-land) {
+			margin-bottom: var(--gap);
+		}
 
 		&--wrap-on-land {
+			display: flex;
+			flex-direction: column;
+			gap: var(--gap);
 			@include mq(mq-land) {
-				display: flex;
-				gap: var(--gap);
+				flex-direction: row;
 				flex-wrap: wrap;
 			}
 			.auth-form__col {
@@ -89,6 +96,7 @@
 		border-width: $line-THICK;
 		border-radius: 0;
 		color: inherit;
+		height: auto;
 
 		font-size: $fz-H4;
 		@include mq(mq-land) {

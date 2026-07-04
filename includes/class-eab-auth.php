@@ -38,6 +38,7 @@ class EAB_Auth {
         add_action('init', array($this, 'handle_form_posts'), 6);
         add_action('template_redirect', array($this, 'redirect_logged_in_from_register'));
         add_action('login_init', array($this, 'redirect_wp_register'));
+        add_action('login_init', array($this, 'handle_logged_in_login_page'), 20);
         add_filter('register_url', array($this, 'filter_register_url'));
         add_filter('authenticate', array($this, 'block_unverified_login'), 30, 3);
         add_shortcode('eab_register', array($this, 'shortcode_register'));
@@ -54,6 +55,35 @@ class EAB_Auth {
                 exit;
             }
         }
+    }
+
+    public function handle_logged_in_login_page() {
+        if (!is_user_logged_in() || $this->is_wp_login_action_request()) {
+            return;
+        }
+
+        $redirect = isset($_REQUEST['redirect_to']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_to'])) : '';
+
+        login_header(esc_html__('Přihlášení', 'events-and-bookings'));
+
+        if ($redirect && wp_validate_redirect($redirect, false)) {
+            echo '<p class="eab-auth-notice"><a href="' . esc_url($redirect) . '">' . esc_html__('Pokračovat', 'events-and-bookings') . '</a></p>';
+        } else {
+            echo '<p class="eab-auth-notice">' . esc_html__('Jste již přihlášeni.', 'events-and-bookings') . '</p>';
+        }
+
+        login_footer();
+        exit;
+    }
+
+    private function is_wp_login_action_request() {
+        $action = isset($_REQUEST['action']) ? sanitize_text_field(wp_unslash($_REQUEST['action'])) : '';
+        if ($action === '') {
+            return false;
+        }
+
+        $passthrough = array('logout', 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'postpass', 'confirmaction');
+        return in_array($action, $passthrough, true);
     }
 
     public function filter_register_url($url) {
