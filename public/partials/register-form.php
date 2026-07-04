@@ -33,12 +33,12 @@ $login_url = EAB_Auth::get_page_url('login') ?: EAB_Event::get_login_url();
     </div>
     
     <div class="auth-form__row auth-form__row--wrap-on-land">
-        <div class="auth-form__row auth-form__field">
+        <div class="auth-form__col auth-form__field">
             <label for="email"><?php esc_html_e('E-mail', 'events-and-bookings'); ?></label>
             <input type="email" id="email" name="email" placeholder="beachova@email.com" autocomplete="email" required>
         </div>
 
-        <div class="auth-form__row auth-form__field">
+        <div class="auth-form__col auth-form__field">
             <label for="phone"><?php esc_html_e('Telefon', 'events-and-bookings'); ?></label>
             <input type="tel" id="phone" name="phone" placeholder="+420 123 456 789" autocomplete="tel" required>
         </div>

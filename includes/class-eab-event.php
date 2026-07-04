@@ -167,16 +167,6 @@ class EAB_Event {
     }
 
     public static function get_login_url($redirect = '') {
-        $url = class_exists('EAB_Auth') ? EAB_Auth::get_page_url('login') : '';
-        if (!$url) {
-            $page_id = (int) get_option('eab_login_page', 0);
-            if ($page_id) {
-                $url = get_permalink($page_id);
-            }
-        }
-        if ($url) {
-            return $redirect ? add_query_arg('redirect_to', urlencode($redirect), $url) : $url;
-        }
         return wp_login_url($redirect);
     }
 
