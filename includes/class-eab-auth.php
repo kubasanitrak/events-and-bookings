@@ -36,10 +36,13 @@ class EAB_Auth {
     public function __construct() {
         add_action('init', array($this, 'handle_verification_link'), 5);
         add_action('init', array($this, 'handle_form_posts'), 6);
+        add_action('template_redirect', array($this, 'redirect_legacy_login_page'), 5);
         add_action('template_redirect', array($this, 'redirect_logged_in_from_register'));
         add_action('login_init', array($this, 'redirect_wp_register'));
         add_action('login_init', array($this, 'handle_logged_in_login_page'), 20);
         add_filter('register_url', array($this, 'filter_register_url'));
+        add_filter('login_redirect', array($this, 'filter_login_redirect'), 10, 3);
+        add_filter('login_message', array($this, 'filter_login_message'));
         add_filter('authenticate', array($this, 'block_unverified_login'), 30, 3);
         add_shortcode('eab_register', array($this, 'shortcode_register'));
         add_shortcode('eab_login', array($this, 'shortcode_login'));
@@ -89,6 +92,123 @@ class EAB_Auth {
     public function filter_register_url($url) {
         $custom = self::get_page_url('register');
         return $custom ?: $url;
+    }
+
+    /**
+     * Permanent redirect from legacy /prihlaseni/ (or [eab_login]) to wp-login.php.
+     */
+    public function redirect_legacy_login_page() {
+        if (!$this->is_legacy_login_view()) {
+            return;
+        }
+
+        $redirect_to = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect_to'])) : '';
+        $args        = array();
+
+        foreach (array('eab_auth_error', 'eab_auth_message', 'eab_auth_success') as $key) {
+            if (!empty($_GET[$key])) {
+                $args[$key] = sanitize_text_field(wp_unslash($_GET[$key]));
+            }
+        }
+
+        wp_safe_redirect(self::build_wp_login_url($redirect_to, $args), 301);
+        exit;
+    }
+
+    private function is_legacy_login_view() {
+        if (!is_singular('page')) {
+            return false;
+        }
+
+        $page_ids = get_option('eab_page_ids', array());
+        $login_id = is_array($page_ids) ? (int) ($page_ids['login'] ?? 0) : 0;
+        if ($login_id && is_page($login_id)) {
+            return true;
+        }
+
+        $post = get_queried_object();
+        return $post instanceof WP_Post && has_shortcode($post->post_content, 'eab_login');
+    }
+
+    /**
+     * @param string $redirect_to Optional validated redirect target.
+     * @param array  $extra_args  Query args (eab_auth_error, etc.).
+     */
+    public static function build_wp_login_url($redirect_to = '', $extra_args = array()) {
+        $validated = ($redirect_to && wp_validate_redirect($redirect_to, false)) ? $redirect_to : '';
+        $url       = wp_login_url($validated);
+
+        if (!empty($extra_args)) {
+            $url = add_query_arg($extra_args, $url);
+        }
+
+        return $url;
+    }
+
+    /**
+     * Front-end logins without redirect_to land on the member dashboard.
+     */
+    public function filter_login_redirect($redirect_to, $requested_redirect_to, $user) {
+        if ($requested_redirect_to && wp_validate_redirect($requested_redirect_to, false)) {
+            return $requested_redirect_to;
+        }
+
+        $admin_url = admin_url();
+        if ($redirect_to && wp_validate_redirect($redirect_to, false)) {
+            if ($redirect_to !== $admin_url || user_can($user, 'edit_posts')) {
+                return $redirect_to;
+            }
+        }
+
+        $dashboard = self::get_page_url('dashboard');
+        return $dashboard ?: home_url('/muj-ucet/');
+    }
+
+    public function filter_login_message($message) {
+        $codes = self::auth_message_codes();
+        $extra = '';
+
+        if (!empty($_GET['eab_auth_success'])) {
+            $code = sanitize_key(wp_unslash($_GET['eab_auth_success']));
+            if (isset($codes[$code])) {
+                $extra .= '<p class="message">' . esc_html($codes[$code]) . '</p>';
+            }
+        }
+
+        if (!empty($_GET['eab_auth_error'])) {
+            $code = sanitize_key(rawurldecode(wp_unslash($_GET['eab_auth_error'])));
+            $msg  = !empty($_GET['eab_auth_message'])
+                ? sanitize_text_field(rawurldecode(wp_unslash($_GET['eab_auth_message'])))
+                : (isset($codes[$code]) ? $codes[$code] : __('Došlo k chybě.', 'events-and-bookings'));
+            $extra .= '<div id="login_error">' . esc_html($msg) . '</div>';
+        }
+
+        return $message . $extra;
+    }
+
+    private static function auth_message_codes() {
+        return array(
+            'verification_sent'   => __('Registrace proběhla. Na váš e-mail jsme odeslali ověřovací odkaz — po kliknutí si nastavíte heslo.', 'events-and-bookings'),
+            'verified'            => __('E-mail byl ověřen. Nastavte si heslo níže.', 'events-and-bookings'),
+            'password_set'        => __('Heslo bylo uloženo. Nyní se můžete přihlásit.', 'events-and-bookings'),
+            'invalid_nonce'       => __('Platnost formuláře vypršela. Odešlete ho znovu.', 'events-and-bookings'),
+            'first_name'          => __('Vyplňte prosím jméno.', 'events-and-bookings'),
+            'last_name'           => __('Vyplňte prosím příjmení.', 'events-and-bookings'),
+            'birth_date'          => __('Zadejte platné datum narození (dd.mm.rrrr).', 'events-and-bookings'),
+            'email'               => __('Zadejte platný e-mail.', 'events-and-bookings'),
+            'email_exists'        => __('Účet s tímto e-mailem již existuje.', 'events-and-bookings'),
+            'phone'               => __('Vyplňte prosím telefon.', 'events-and-bookings'),
+            'agreement'           => __('Musíte souhlasit s podmínkami.', 'events-and-bookings'),
+            'registration_failed' => __('Registraci se nepodařilo dokončit. Zkuste to prosím znovu.', 'events-and-bookings'),
+            'username_exists'     => __('Toto uživatelské jméno je obsazené.', 'events-and-bookings'),
+            'gdpr_required'       => __('Musíte souhlasit se zpracováním osobních údajů.', 'events-and-bookings'),
+            'missing_fields'      => __('Vyplňte prosím všechna povinná pole.', 'events-and-bookings'),
+            'invalid_login'       => __('Nesprávný e-mail / uživatelské jméno nebo heslo.', 'events-and-bookings'),
+            'not_verified'        => __('Účet není ověřen. Zkontrolujte e-mail.', 'events-and-bookings'),
+            'invalid_token'       => __('Ověřovací odkaz je neplatný nebo vypršel.', 'events-and-bookings'),
+            'password_mismatch'   => __('Hesla se neshodují.', 'events-and-bookings'),
+            'weak_password'       => __('Heslo musí mít alespoň 8 znaků.', 'events-and-bookings'),
+        );
     }
 
     public function redirect_logged_in_from_register() {
@@ -205,9 +325,9 @@ class EAB_Auth {
         }
 
         if (is_wp_error($result)) {
-            $redirect = add_query_arg(array(
-                'eab_auth_error' => rawurlencode($result->get_error_code()),
-            ), self::get_page_url('login') ?: $redirect);
+            $redirect = self::build_wp_login_url('', array(
+                'eab_auth_error' => $result->get_error_code(),
+            ));
         } else {
             $redirect = add_query_arg(array(
                 self::QUERY_SET_PASSWORD => '1',
@@ -323,6 +443,17 @@ class EAB_Auth {
     }
 
     private function redirect_with_message($page_key, $code, $message = '', $extra_args = array()) {
+        if ($page_key === 'login') {
+            $args = array_merge(array(
+                'eab_auth_error' => $code,
+            ), $extra_args);
+            if ($message) {
+                $args['eab_auth_message'] = $message;
+            }
+            wp_safe_redirect(self::build_wp_login_url('', $args));
+            exit;
+        }
+
         $url = self::get_page_url($page_key) ?: home_url('/');
         $args = array_merge(array(
             'eab_auth_error' => rawurlencode($code),
@@ -567,20 +698,11 @@ class EAB_Auth {
         return ob_get_clean();
     }
 
+    /**
+     * @deprecated Login is handled by wp-login.php; legacy views redirect via redirect_legacy_login_page().
+     */
     public function shortcode_login() {
-        if (is_user_logged_in()) {
-            $redirect = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect_to'])) : '';
-            if ($redirect && wp_validate_redirect($redirect, false)) {
-                return '<p class="eab-auth-notice"><a href="' . esc_url($redirect) . '">' . esc_html__('Pokračovat', 'events-and-bookings') . '</a></p>';
-            }
-            return '<p class="eab-auth-notice">' . esc_html__('Jste již přihlášeni.', 'events-and-bookings') . '</p>';
-        }
-
-        ob_start();
-        $this->render_messages();
-        $redirect = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect_to'])) : '';
-        include EAB_PLUGIN_DIR . 'public/partials/login-form.php';
-        return ob_get_clean();
+        return '';
     }
 
     public function shortcode_set_password() {
@@ -604,27 +726,7 @@ class EAB_Auth {
     }
 
     private function render_messages() {
-        $codes = array(
-            'verification_sent' => __('Registrace proběhla. Na váš e-mail jsme odeslali ověřovací odkaz — po kliknutí si nastavíte heslo.', 'events-and-bookings'),
-            'verified'          => __('E-mail byl ověřen. Nastavte si heslo níže.', 'events-and-bookings'),
-            'password_set'      => __('Heslo bylo uloženo. Nyní se můžete přihlásit.', 'events-and-bookings'),
-            'invalid_nonce'     => __('Platnost formuláře vypršela. Odešlete ho znovu.', 'events-and-bookings'),
-            'first_name'        => __('Vyplňte prosím jméno.', 'events-and-bookings'),
-            'last_name'         => __('Vyplňte prosím příjmení.', 'events-and-bookings'),
-            'birth_date'        => __('Zadejte platné datum narození (dd.mm.rrrr).', 'events-and-bookings'),
-            'email'             => __('Zadejte platný e-mail.', 'events-and-bookings'),
-            'email_exists'      => __('Účet s tímto e-mailem již existuje.', 'events-and-bookings'),
-            'phone'             => __('Vyplňte prosím telefon.', 'events-and-bookings'),
-            'agreement'         => __('Musíte souhlasit s podmínkami.', 'events-and-bookings'),
-            'registration_failed' => __('Registraci se nepodařilo dokončit. Zkuste to prosím znovu.', 'events-and-bookings'),
-            'username_exists'   => __('Toto uživatelské jméno je obsazené.', 'events-and-bookings'),
-            'gdpr_required'     => __('Musíte souhlasit se zpracováním osobních údajů.', 'events-and-bookings'),
-            'missing_fields'    => __('Vyplňte prosím všechna povinná pole.', 'events-and-bookings'),
-            'invalid_login'     => __('Nesprávný e-mail / uživatelské jméno nebo heslo.', 'events-and-bookings'),
-            'not_verified'      => __('Účet není ověřen. Zkontrolujte e-mail.', 'events-and-bookings'),
-            'password_mismatch' => __('Hesla se neshodují.', 'events-and-bookings'),
-            'weak_password'     => __('Heslo musí mít alespoň 8 znaků.', 'events-and-bookings'),
-        );
+        $codes = self::auth_message_codes();
 
         if (!empty($_GET['eab_auth_success'])) {
             $code = sanitize_key(wp_unslash($_GET['eab_auth_success']));

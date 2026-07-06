@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 }
 
 $terms_url = EAB_Auth::get_terms_url();
-$login_url = EAB_Auth::get_page_url('login') ?: EAB_Event::get_login_url();
+$login_url = EAB_Event::get_login_url();
 ?>
 <form class="auth-form" method="post" action="" novalidate>
     <?php wp_nonce_field(EAB_Auth::ACTION_REGISTER); ?>
