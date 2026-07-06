@@ -146,26 +146,42 @@ class EAB_Auth {
     }
 
     /**
-     * Front-end logins without redirect_to land on the member dashboard.
+     * Front-end logins without a meaningful redirect_to land on the member dashboard.
      */
     public function filter_login_redirect($redirect_to, $requested_redirect_to, $user) {
         if (!$user instanceof WP_User) {
             return $redirect_to;
         }
 
-        if ($requested_redirect_to && wp_validate_redirect($requested_redirect_to, false)) {
+        $dashboard = self::get_page_url('dashboard') ?: home_url('/muj-ucet/');
+
+        if ($this->should_honor_login_redirect($requested_redirect_to)) {
             return $requested_redirect_to;
         }
 
-        $admin_url = admin_url();
-        if ($redirect_to && wp_validate_redirect($redirect_to, false)) {
-            if ($redirect_to !== $admin_url || user_can($user, 'edit_posts')) {
-                return $redirect_to;
-            }
+        if (user_can($user, 'edit_posts')) {
+            return $redirect_to;
         }
 
-        $dashboard = self::get_page_url('dashboard');
-        return $dashboard ?: home_url('/muj-ucet/');
+        return $dashboard;
+    }
+
+    /**
+     * Ignore generic WP defaults (home, wp-admin, profile); keep booking/checkout targets.
+     */
+    private function should_honor_login_redirect($url) {
+        if (!$url || !wp_validate_redirect($url, false)) {
+            return false;
+        }
+
+        $normalized = untrailingslashit($url);
+        $ignored    = array(
+            untrailingslashit(home_url('/')),
+            untrailingslashit(admin_url()),
+            untrailingslashit(admin_url('profile.php')),
+        );
+
+        return !in_array($normalized, $ignored, true);
     }
 
     public function filter_login_message($message) {
