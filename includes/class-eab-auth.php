@@ -149,6 +149,10 @@ class EAB_Auth {
      * Front-end logins without redirect_to land on the member dashboard.
      */
     public function filter_login_redirect($redirect_to, $requested_redirect_to, $user) {
+        if (!$user instanceof WP_User) {
+            return $redirect_to;
+        }
+
         if ($requested_redirect_to && wp_validate_redirect($requested_redirect_to, false)) {
             return $requested_redirect_to;
         }
