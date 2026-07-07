@@ -80,7 +80,9 @@ class EAB_Post_Types {
                 'slug'       => 'akce',
                 'with_front' => false,
             ),
-            'has_archive'         => 'akce',
+            // Archive disabled: /akce/ is served by a real WP page holding
+            // the [eab_events_list] shortcode. Singles stay at /akce/{slug}/.
+            'has_archive'         => false,
             'capability_type'     => 'post',
             'hierarchical'        => false,
             'menu_icon'           => 'dashicons-calendar-alt',
@@ -115,7 +117,9 @@ class EAB_Post_Types {
                 'slug'       => 'treninky',
                 'with_front' => false,
             ),
-            'has_archive'         => 'treninky',
+            // Archive disabled: /treninky/ is served by a real WP page holding
+            // the [eab_events_list] shortcode. Singles stay at /treninky/{slug}/.
+            'has_archive'         => false,
             'capability_type'     => 'post',
             'hierarchical'        => false,
             'menu_icon'           => 'dashicons-universal-access-alt',

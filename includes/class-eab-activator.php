@@ -82,6 +82,16 @@ class EAB_Activator {
      */
     public static function create_pages() {
         $pages = array(
+            'events' => array(
+                'title'   => __('Akce', 'events-and-bookings'),
+                'slug'    => 'akce',
+                'content' => '[eab_events_list type="event" show_filters="true" filter_action="/akce/"]',
+            ),
+            'trainings' => array(
+                'title'   => __('Tréninky', 'events-and-bookings'),
+                'slug'    => 'treninky',
+                'content' => '[eab_events_list type="training" show_filters="true" filter_action="/treninky/"]',
+            ),
             'register' => array(
                 'title'   => __('Registrace', 'events-and-bookings'),
                 'slug'    => 'registrace',
@@ -159,8 +169,13 @@ class EAB_Activator {
         if (!is_array($ids) || empty($ids['login']) || !get_post($ids['login'])
             || empty($ids['checkout']) || !get_post($ids['checkout'])
             || empty($ids['payment_success']) || !get_post($ids['payment_success'])
-            || empty($ids['payment_failed']) || !get_post($ids['payment_failed'])) {
+            || empty($ids['payment_failed']) || !get_post($ids['payment_failed'])
+            || empty($ids['events']) || !get_post($ids['events'])
+            || empty($ids['trainings']) || !get_post($ids['trainings'])) {
             self::create_pages();
+            // Archives were switched off in favour of these pages; flush stale
+            // rewrite rules once so /akce/ and /treninky/ route to the pages.
+            flush_rewrite_rules();
         }
     }
 }
