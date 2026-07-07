@@ -55,6 +55,7 @@ class EAB_Public {
         $tags = array(
             'eab_events_grid',
             'eab_events_list',
+            'eab_trainings_list',
             'eab_event_detail',
             'eab_book_button',
             'eab_register',

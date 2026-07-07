@@ -17,6 +17,9 @@ class EAB_Post_Types {
     const TAX_SCHEDULE_TYPE  = 'eab_schedule_type';
     const TAX_EVENT_KIND     = 'eab_event_kind';
     const TAX_REGION         = 'eab_region';
+    const TAX_AGE_GROUP      = 'eab_age_group';
+    const TAX_SKILL_LEVEL    = 'eab_skill_level';
+    const TAX_GENDER         = 'eab_gender';
 
     /** @var string[] */
     private static $bookable_post_types = array(
@@ -28,6 +31,7 @@ class EAB_Post_Types {
         add_action('init', array($this, 'register_post_types'), 5);
         add_action('init', array($this, 'register_taxonomies'), 6);
         add_action('init', array($this, 'maybe_seed_default_terms'), 20);
+        add_action('init', array($this, 'maybe_upgrade_terms'), 21);
         add_filter('manage_' . self::POST_TYPE_EVENT . '_posts_columns', array($this, 'add_list_columns'));
         add_filter('manage_' . self::POST_TYPE_TRAINING . '_posts_columns', array($this, 'add_list_columns'));
         add_action('manage_' . self::POST_TYPE_EVENT . '_posts_custom_column', array($this, 'render_list_columns'), 10, 2);
@@ -169,6 +173,10 @@ class EAB_Post_Types {
             $this->register_event_kind_taxonomy($post_type);
             $this->register_region_taxonomy($post_type);
         }
+
+        $this->register_age_group_taxonomy(self::POST_TYPE_TRAINING);
+        $this->register_skill_level_taxonomy(self::POST_TYPE_TRAINING);
+        $this->register_gender_taxonomy(self::POST_TYPE_TRAINING);
     }
 
     private function register_audience_taxonomy($post_type) {
@@ -243,6 +251,60 @@ class EAB_Post_Types {
         ));
     }
 
+    private function register_age_group_taxonomy($post_type) {
+        register_taxonomy(self::TAX_AGE_GROUP, $post_type, array(
+            'labels' => array(
+                'name'          => __('Věková skupina', 'events-and-bookings'),
+                'singular_name' => __('Věková skupina', 'events-and-bookings'),
+            ),
+            'hierarchical'      => false,
+            'public'            => true,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'show_in_rest'      => true,
+            'rewrite'           => array(
+                'slug'       => 'vek',
+                'with_front' => false,
+            ),
+        ));
+    }
+
+    private function register_skill_level_taxonomy($post_type) {
+        register_taxonomy(self::TAX_SKILL_LEVEL, $post_type, array(
+            'labels' => array(
+                'name'          => __('Úroveň', 'events-and-bookings'),
+                'singular_name' => __('Úroveň', 'events-and-bookings'),
+            ),
+            'hierarchical'      => false,
+            'public'            => true,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'show_in_rest'      => true,
+            'rewrite'           => array(
+                'slug'       => 'uroven',
+                'with_front' => false,
+            ),
+        ));
+    }
+
+    private function register_gender_taxonomy($post_type) {
+        register_taxonomy(self::TAX_GENDER, $post_type, array(
+            'labels' => array(
+                'name'          => __('Pohlaví / skupina', 'events-and-bookings'),
+                'singular_name' => __('Pohlaví / skupina', 'events-and-bookings'),
+            ),
+            'hierarchical'      => false,
+            'public'            => true,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'show_in_rest'      => true,
+            'rewrite'           => array(
+                'slug'       => 'pohlavi',
+                'with_front' => false,
+            ),
+        ));
+    }
+
     public function maybe_seed_default_terms() {
         if (get_option('eab_default_terms_seeded')) {
             return;
@@ -263,16 +325,31 @@ class EAB_Post_Types {
             self::TAX_SCHEDULE_TYPE => array(
                 'tydenni'   => __('Týdenní', 'events-and-bookings'),
                 'vikend'    => __('Víkend', 'events-and-bookings'),
-                'cely-den'  => __('Celý den', 'events-and-bookings'),
+                'cely-den'  => __('Jednodenní', 'events-and-bookings'),
             ),
             self::TAX_EVENT_KIND => array(
                 'turnaj'      => __('Turnaj', 'events-and-bookings'),
                 'tabor'       => __('Tábor', 'events-and-bookings'),
                 'letni-tabor' => __('Letní tábor', 'events-and-bookings'),
+                'kemp'        => __('Kemp', 'events-and-bookings'),
             ),
             self::TAX_REGION => array(
                 'zahranici' => __('Zahraničí', 'events-and-bookings'),
                 'domaci'    => __('Domácí', 'events-and-bookings'),
+            ),
+            self::TAX_AGE_GROUP => array(
+                '3-6-let'    => __('3–6 let', 'events-and-bookings'),
+                '6-9-let'    => __('6–9 let', 'events-and-bookings'),
+                '10-15-let'  => __('10–15 let', 'events-and-bookings'),
+            ),
+            self::TAX_SKILL_LEVEL => array(
+                'zacatecnici'       => __('Začátečníci', 'events-and-bookings'),
+                'stredne-pokrocili' => __('Středně pokročilí', 'events-and-bookings'),
+                'pokrocili'         => __('Pokročilí', 'events-and-bookings'),
+            ),
+            self::TAX_GENDER => array(
+                'zeny' => __('Ženy', 'events-and-bookings'),
+                'muzi' => __('Muži', 'events-and-bookings'),
             ),
         );
 
@@ -281,6 +358,38 @@ class EAB_Post_Types {
                 if (!term_exists($slug, $taxonomy)) {
                     wp_insert_term($name, $taxonomy, array('slug' => $slug));
                 }
+            }
+        }
+    }
+
+    /**
+     * Upgrade terms on existing installs (idempotent).
+     */
+    public function maybe_upgrade_terms() {
+        $version = (int) get_option('eab_terms_version', 0);
+        if ($version >= 2) {
+            return;
+        }
+
+        self::seed_default_terms();
+
+        $cely_den = get_term_by('slug', 'cely-den', self::TAX_SCHEDULE_TYPE);
+        if ($cely_den && !is_wp_error($cely_den)) {
+            wp_update_term((int) $cely_den->term_id, self::TAX_SCHEDULE_TYPE, array(
+                'name' => __('Jednodenní', 'events-and-bookings'),
+            ));
+        }
+
+        update_option('eab_terms_version', 2);
+
+        $trainings_page = get_page_by_path('treninky');
+        if ($trainings_page) {
+            $expected = '[eab_trainings_list filter_action="/treninky/"]';
+            if (strpos($trainings_page->post_content, 'eab_trainings_list') === false) {
+                wp_update_post(array(
+                    'ID'           => (int) $trainings_page->ID,
+                    'post_content' => $expected,
+                ));
             }
         }
     }

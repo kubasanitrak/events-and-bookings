@@ -90,7 +90,7 @@ class EAB_Activator {
             'trainings' => array(
                 'title'   => __('Tréninky', 'events-and-bookings'),
                 'slug'    => 'treninky',
-                'content' => '[eab_events_list type="training" show_filters="true" filter_action="/treninky/"]',
+                'content' => '[eab_trainings_list filter_action="/treninky/"]',
             ),
             'register' => array(
                 'title'   => __('Registrace', 'events-and-bookings'),

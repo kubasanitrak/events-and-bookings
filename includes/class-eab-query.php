@@ -9,11 +9,14 @@ if (!defined('ABSPATH')) {
 
 class EAB_Query {
 
-    const GET_TYPE     = 'eab_type';
-    const GET_AUDIENCE = 'eab_publikum';
-    const GET_SCHEDULE = 'eab_rozvrzeni';
-    const GET_KIND     = 'eab_druh';
-    const GET_REGION   = 'eab_region';
+    const GET_TYPE         = 'eab_type';
+    const GET_AUDIENCE     = 'eab_publikum';
+    const GET_SCHEDULE     = 'eab_rozvrzeni';
+    const GET_KIND         = 'eab_druh';
+    const GET_REGION       = 'eab_region';
+    const GET_AGE_GROUP    = 'eab_vek';
+    const GET_SKILL_LEVEL  = 'eab_uroven';
+    const GET_GENDER       = 'eab_pohlavi';
 
     /**
      * @param array $atts Shortcode attributes.
@@ -36,6 +39,10 @@ class EAB_Query {
             'schedule'    => '',
             'kind'        => '',
             'region'      => '',
+            'age_group'   => '',
+            'skill_level' => '',
+            'gender'      => '',
+            'skip_url_filters' => array(),
             'use_url_filters' => 'true',
         ));
 
@@ -65,7 +72,11 @@ class EAB_Query {
         }
 
         $use_url = filter_var($atts['use_url_filters'], FILTER_VALIDATE_BOOLEAN);
-        $tax_query = self::build_tax_query($atts, $use_url);
+        $skip_url = array();
+        if (!empty($atts['skip_url_filters']) && is_array($atts['skip_url_filters'])) {
+            $skip_url = array_map('sanitize_key', $atts['skip_url_filters']);
+        }
+        $tax_query = self::build_tax_query($atts, $use_url, $skip_url);
         if (!empty($tax_query)) {
             $args['tax_query'] = array_merge(array('relation' => 'AND'), $tax_query);
         }
@@ -92,7 +103,7 @@ class EAB_Query {
         return EAB_Post_Types::get_bookable_post_types();
     }
 
-    private static function build_tax_query($atts, $use_url) {
+    private static function build_tax_query($atts, $use_url, $skip_url = array()) {
         $map = array(
             'audience' => array(
                 'tax'  => EAB_Post_Types::TAX_AUDIENCE,
@@ -114,6 +125,21 @@ class EAB_Query {
                 'get'  => self::GET_REGION,
                 'slug' => $use_url ? self::get_param(self::GET_REGION, $atts['region']) : $atts['region'],
             ),
+            'age_group' => array(
+                'tax'  => EAB_Post_Types::TAX_AGE_GROUP,
+                'get'  => self::GET_AGE_GROUP,
+                'slug' => $use_url ? self::get_param(self::GET_AGE_GROUP, $atts['age_group']) : $atts['age_group'],
+            ),
+            'skill_level' => array(
+                'tax'  => EAB_Post_Types::TAX_SKILL_LEVEL,
+                'get'  => self::GET_SKILL_LEVEL,
+                'slug' => $use_url ? self::get_param(self::GET_SKILL_LEVEL, $atts['skill_level']) : $atts['skill_level'],
+            ),
+            'gender' => array(
+                'tax'  => EAB_Post_Types::TAX_GENDER,
+                'get'  => self::GET_GENDER,
+                'slug' => $use_url ? self::get_param(self::GET_GENDER, $atts['gender']) : $atts['gender'],
+            ),
         );
 
         if ($use_url) {
@@ -124,8 +150,10 @@ class EAB_Query {
         }
 
         $tax_query = array();
-        foreach ($map as $row) {
-            $slug = sanitize_title($row['slug']);
+        foreach ($map as $key => $row) {
+            $read_url = $use_url && !in_array($key, $skip_url, true);
+            $slug = $read_url ? self::get_param($row['get'], $atts[$key]) : sanitize_title($atts[$key]);
+            $slug = sanitize_title($slug);
             if ($slug === '') {
                 continue;
             }
@@ -201,11 +229,95 @@ class EAB_Query {
 
     public static function get_active_filters() {
         return array(
-            'type'     => self::get_url_type_override(),
-            'audience' => self::get_param(self::GET_AUDIENCE, ''),
-            'schedule' => self::get_param(self::GET_SCHEDULE, ''),
-            'kind'     => self::get_param(self::GET_KIND, ''),
-            'region'   => self::get_param(self::GET_REGION, ''),
+            'type'        => self::get_url_type_override(),
+            'audience'    => self::get_param(self::GET_AUDIENCE, ''),
+            'schedule'    => self::get_param(self::GET_SCHEDULE, ''),
+            'kind'        => self::get_param(self::GET_KIND, ''),
+            'region'      => self::get_param(self::GET_REGION, ''),
+            'age_group'   => self::get_param(self::GET_AGE_GROUP, ''),
+            'skill_level' => self::get_param(self::GET_SKILL_LEVEL, ''),
+            'gender'      => self::get_param(self::GET_GENDER, ''),
+        );
+    }
+
+    /**
+     * Pill definitions for a listing context.
+     *
+     * @param string $context events|kids|adults
+     * @return array<int, array{key:string,param:string,slug:string,label:string,active:bool}>
+     */
+    public static function get_filter_pills($context = 'events') {
+        $active = self::get_active_filters();
+        $configs = array(
+            'events' => array(
+                array('key' => 'audience', 'param' => self::GET_AUDIENCE, 'slug' => 'deti', 'label' => __('Děti', 'events-and-bookings')),
+                array('key' => 'audience', 'param' => self::GET_AUDIENCE, 'slug' => 'dospeli', 'label' => __('Dospělí', 'events-and-bookings')),
+                array('key' => 'schedule', 'param' => self::GET_SCHEDULE, 'slug' => 'tydenni', 'label' => __('Týdenní', 'events-and-bookings')),
+                array('key' => 'schedule', 'param' => self::GET_SCHEDULE, 'slug' => 'vikend', 'label' => __('Víkendové', 'events-and-bookings')),
+                array('key' => 'schedule', 'param' => self::GET_SCHEDULE, 'slug' => 'cely-den', 'label' => __('Jednodenní', 'events-and-bookings')),
+                array('key' => 'region', 'param' => self::GET_REGION, 'slug' => 'zahranici', 'label' => __('Zahraniční', 'events-and-bookings')),
+                array('key' => 'kind', 'param' => self::GET_KIND, 'slug' => 'turnaj', 'label' => __('Turnaj', 'events-and-bookings')),
+                array('key' => 'kind', 'param' => self::GET_KIND, 'slug' => 'kemp', 'label' => __('Kemp', 'events-and-bookings')),
+                array('key' => 'kind', 'param' => self::GET_KIND, 'slug' => 'tabor', 'label' => __('Tábor', 'events-and-bookings')),
+            ),
+            'kids' => array(
+                array('key' => 'age_group', 'param' => self::GET_AGE_GROUP, 'slug' => '3-6-let', 'label' => __('3–6 let', 'events-and-bookings')),
+                array('key' => 'age_group', 'param' => self::GET_AGE_GROUP, 'slug' => '6-9-let', 'label' => __('6–9 let', 'events-and-bookings')),
+                array('key' => 'age_group', 'param' => self::GET_AGE_GROUP, 'slug' => '10-15-let', 'label' => __('10–15 let', 'events-and-bookings')),
+            ),
+            'adults' => array(
+                array('key' => 'skill_level', 'param' => self::GET_SKILL_LEVEL, 'slug' => 'zacatecnici', 'label' => __('Začátečníci', 'events-and-bookings')),
+                array('key' => 'skill_level', 'param' => self::GET_SKILL_LEVEL, 'slug' => 'stredne-pokrocili', 'label' => __('Středně pokročilí', 'events-and-bookings')),
+                array('key' => 'skill_level', 'param' => self::GET_SKILL_LEVEL, 'slug' => 'pokrocili', 'label' => __('Pokročilí', 'events-and-bookings')),
+                array('key' => 'gender', 'param' => self::GET_GENDER, 'slug' => 'zeny', 'label' => __('Ženy', 'events-and-bookings')),
+                array('key' => 'gender', 'param' => self::GET_GENDER, 'slug' => 'muzi', 'label' => __('Muži', 'events-and-bookings')),
+            ),
+        );
+
+        $pills = isset($configs[$context]) ? $configs[$context] : array();
+        foreach ($pills as $index => $pill) {
+            $pills[$index]['active'] = (($active[$pill['key']] ?? '') === $pill['slug']);
+        }
+
+        return $pills;
+    }
+
+    /**
+     * @param string $base_url
+     * @param string $param
+     * @param string $slug
+     * @param string $group_key
+     */
+    public static function get_filter_toggle_url($base_url, $param, $slug, $group_key) {
+        $active = self::get_active_filters();
+        if (($active[$group_key] ?? '') === $slug) {
+            return remove_query_arg($param, $base_url);
+        }
+
+        return add_query_arg($param, $slug, $base_url);
+    }
+
+    /**
+     * @param string   $base_url
+     * @param string[] $params
+     */
+    public static function get_filter_reset_url($base_url, $params) {
+        return remove_query_arg($params, $base_url);
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function get_all_filter_params() {
+        return array(
+            self::GET_TYPE,
+            self::GET_AUDIENCE,
+            self::GET_SCHEDULE,
+            self::GET_KIND,
+            self::GET_REGION,
+            self::GET_AGE_GROUP,
+            self::GET_SKILL_LEVEL,
+            self::GET_GENDER,
         );
     }
 }

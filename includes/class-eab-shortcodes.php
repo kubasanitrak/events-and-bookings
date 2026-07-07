@@ -14,6 +14,7 @@ class EAB_Shortcodes {
     public function __construct() {
         add_shortcode('eab_events_grid', array($this, 'events_grid'));
         add_shortcode('eab_events_list', array($this, 'events_list'));
+        add_shortcode('eab_trainings_list', array($this, 'trainings_list'));
         add_shortcode('eab_event_detail', array($this, 'event_detail'));
         add_shortcode('eab_book_button', array($this, 'book_button'));
         add_filter('eab_enqueue_public_assets', array($this, 'force_enqueue_assets'));
@@ -99,6 +100,53 @@ class EAB_Shortcodes {
             'preset_atts'   => $atts,
         );
         $this->load_partial('events-list', $context);
+        wp_reset_postdata();
+        return ob_get_clean();
+    }
+
+    /**
+     * [eab_trainings_list limit="48" filter_action="/treninky/" kids_title="..." adults_title="..."]
+     */
+    public function trainings_list($atts) {
+        $this->flag_assets();
+        $atts = shortcode_atts(array(
+            'limit'           => 48,
+            'kids_title'      => __('školní rok 25/26', 'events-and-bookings'),
+            'adults_title'    => __('zimní sezóna 26', 'events-and-bookings'),
+            'only_open'       => 'false',
+            'use_url_filters' => 'true',
+            'filter_action'   => '',
+        ), $atts, 'eab_trainings_list');
+
+        $base = array(
+            'type'            => 'training',
+            'limit'           => $atts['limit'],
+            'only_open'       => $atts['only_open'],
+            'use_url_filters' => $atts['use_url_filters'],
+        );
+
+        $kids_query = new WP_Query(EAB_Query::build_query_args(array_merge($base, array(
+            'audience'         => 'deti',
+            'skill_level'      => '',
+            'gender'           => '',
+            'skip_url_filters' => array('audience', 'skill_level', 'gender', 'schedule', 'kind', 'region'),
+        ))));
+
+        $adults_query = new WP_Query(EAB_Query::build_query_args(array_merge($base, array(
+            'audience'         => 'dospeli',
+            'age_group'        => '',
+            'skip_url_filters' => array('audience', 'age_group', 'schedule', 'kind', 'region'),
+        ))));
+
+        ob_start();
+        $context = array(
+            'kids_query'    => $kids_query,
+            'adults_query'  => $adults_query,
+            'kids_title'    => $atts['kids_title'],
+            'adults_title'  => $atts['adults_title'],
+            'filter_action' => $atts['filter_action'] ? esc_url($atts['filter_action']) : '',
+        );
+        $this->load_partial('trainings-list', $context);
         wp_reset_postdata();
         return ob_get_clean();
     }

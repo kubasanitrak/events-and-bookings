@@ -77,12 +77,6 @@ $current_type = $active['type'] ?: $preset_type;
 
     <div class="eab-filters__actions">
         <button type="submit" class="eab-btn"><?php esc_html_e('Filtrovat', 'events-and-bookings'); ?></button>
-        <a class="eab-btn eab-btn--ghost" href="<?php echo esc_url($filter_action ?: remove_query_arg(array(
-            EAB_Query::GET_TYPE,
-            EAB_Query::GET_AUDIENCE,
-            EAB_Query::GET_SCHEDULE,
-            EAB_Query::GET_KIND,
-            EAB_Query::GET_REGION,
-        ))); ?>"><?php esc_html_e('Zrušit filtry', 'events-and-bookings'); ?></a>
+        <a class="eab-btn eab-btn--ghost" href="<?php echo esc_url($filter_action ?: remove_query_arg(EAB_Query::get_all_filter_params())); ?>"><?php esc_html_e('Zrušit filtry', 'events-and-bookings'); ?></a>
     </div>
 </form>

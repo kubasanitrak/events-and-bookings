@@ -95,6 +95,131 @@ class EAB_Event {
         }
     }
 
+    /**
+     * Compact schedule line for listing cards (matches design mockup).
+     */
+    public static function get_card_schedule_line($post_id) {
+        if (!function_exists('get_field')) {
+            return '';
+        }
+
+        $mode = get_field('schedule_mode', $post_id);
+        if (!$mode) {
+            return '';
+        }
+
+        switch ($mode) {
+            case 'season':
+                return self::format_card_date_range(
+                    get_field('season_start_date', $post_id),
+                    get_field('season_end_date', $post_id)
+                );
+
+            case 'whole_day':
+                $date = self::format_card_date(get_field('whole_day_date', $post_id));
+                $from = get_field('whole_day_time_from', $post_id);
+                $to   = get_field('whole_day_time_to', $post_id);
+                if ($from && $to) {
+                    return sprintf('%s, %s–%s', $date, self::format_card_time($from), self::format_card_time($to));
+                }
+                return $date;
+
+            case 'one_off':
+            default:
+                $date = self::format_card_date(get_field('one_off_date', $post_id));
+                $time = get_field('one_off_time', $post_id);
+                return $time ? $date . ', ' . self::format_card_time($time) : $date;
+        }
+    }
+
+    private static function format_card_date($value) {
+        $ts = !empty($value) ? strtotime($value) : false;
+        if (!$ts) {
+            return '';
+        }
+
+        return sprintf('%d/%d/%d', (int) date('j', $ts), (int) date('n', $ts), (int) date('Y', $ts));
+    }
+
+    private static function format_card_date_range($start, $end) {
+        $ts1 = !empty($start) ? strtotime($start) : false;
+        if (!$ts1) {
+            return '';
+        }
+
+        $d1 = (int) date('j', $ts1);
+        $m1 = (int) date('n', $ts1);
+        $y1 = (int) date('Y', $ts1);
+
+        $ts2 = !empty($end) ? strtotime($end) : false;
+        if (!$ts2 || $start === $end) {
+            return sprintf('%d/%d/%d', $d1, $m1, $y1);
+        }
+
+        $d2 = (int) date('j', $ts2);
+        $m2 = (int) date('n', $ts2);
+        $y2 = (int) date('Y', $ts2);
+
+        if ($m1 === $m2 && $y1 === $y2) {
+            return sprintf('%d—%d/%d/%d', $d1, $d2, $m1, $y1);
+        }
+
+        return sprintf('%d/%d/%d – %d/%d/%d', $d1, $m1, $y1, $d2, $m2, $y2);
+    }
+
+    private static function format_card_time($value) {
+        if ($value === '' || $value === null) {
+            return '';
+        }
+
+        return str_replace(':', '.', (string) $value);
+    }
+
+    /**
+     * Location + time meta for training row cards.
+     *
+     * @return array{location:string,time:string}
+     */
+    public static function get_training_row_meta($post_id) {
+        $meta = array(
+            'location' => '',
+            'time'     => '',
+        );
+
+        if (!function_exists('get_field')) {
+            return $meta;
+        }
+
+        $place = trim((string) get_field('place_text', $post_id));
+        if ($place !== '') {
+            $meta['location'] = mb_strtoupper(wp_strip_all_tags($place));
+        }
+
+        $mode = get_field('schedule_mode', $post_id);
+        if ($mode === 'season') {
+            $t1 = get_field('season_start_time', $post_id);
+            $t2 = get_field('season_end_time', $post_id);
+            if ($t1 && $t2) {
+                $meta['time'] = self::format_card_time($t1) . '–' . self::format_card_time($t2);
+            } elseif ($t1) {
+                $meta['time'] = self::format_card_time($t1);
+            }
+        } elseif ($mode === 'whole_day') {
+            $from = get_field('whole_day_time_from', $post_id);
+            $to   = get_field('whole_day_time_to', $post_id);
+            if ($from && $to) {
+                $meta['time'] = self::format_card_time($from) . '–' . self::format_card_time($to);
+            }
+        } elseif ($mode === 'one_off') {
+            $time = get_field('one_off_time', $post_id);
+            if ($time) {
+                $meta['time'] = self::format_card_time($time);
+            }
+        }
+
+        return $meta;
+    }
+
     public static function format_date($value) {
         if (empty($value)) {
             return '';
@@ -130,6 +255,9 @@ class EAB_Event {
             EAB_Post_Types::TAX_SCHEDULE_TYPE,
             EAB_Post_Types::TAX_EVENT_KIND,
             EAB_Post_Types::TAX_REGION,
+            EAB_Post_Types::TAX_AGE_GROUP,
+            EAB_Post_Types::TAX_SKILL_LEVEL,
+            EAB_Post_Types::TAX_GENDER,
         );
         foreach ($taxonomies as $tax) {
             $post_terms = get_the_terms($post_id, $tax);

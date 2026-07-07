@@ -172,5 +172,18 @@
 
     $(function () {
         initCheckout();
+        initFilterPills();
     });
+
+    function initFilterPills() {
+        $(document).on('click', '.eab-filter-pill', function (e) {
+            var href = $(this).attr('href');
+            if (!href) {
+                return;
+            }
+
+            e.preventDefault();
+            window.location.href = href;
+        });
+    }
 })(jQuery);

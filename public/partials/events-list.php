@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 $filter_action = $filter_action ?: get_permalink();
 ?>
-<div class="eab-listing eab-listing--list">
+<div class="eab-listing eab-listing--grid eab-listing--events">
     <?php if (!empty($title)) : ?>
         <header class="eab-listing__header">
             <h2 class="eab-listing__title"><?php echo esc_html($title); ?></h2>
@@ -22,18 +22,19 @@ $filter_action = $filter_action ?: get_permalink();
 
     <?php if (!empty($show_filters)) : ?>
         <?php
-        $show_type_toggle = true;
-        include EAB_PLUGIN_DIR . 'public/partials/filters-form.php';
+        $filter_context = 'events';
+        $reset_params   = EAB_Query::get_all_filter_params();
+        include EAB_PLUGIN_DIR . 'public/partials/filters-pills.php';
         ?>
     <?php endif; ?>
 
     <?php if ($query->have_posts()) : ?>
-        <div class="eab-list">
+        <div class="eab-grid eab-grid--events">
             <?php
             while ($query->have_posts()) :
                 $query->the_post();
                 $post_id = get_the_ID();
-                $layout = 'list';
+                $layout  = 'grid';
                 include EAB_PLUGIN_DIR . 'public/partials/event-card.php';
             endwhile;
             ?>
