@@ -20,13 +20,13 @@ $reset_url      = EAB_Query::get_filter_reset_url($base_url, $reset_params);
 ?>
 <div class="eab-filters eab-filters--pills" data-eab-filter-context="<?php echo esc_attr($filter_context); ?>">
     <div class="eab-filters__head">
-        <p class="eab-filters__label caps"><?php esc_html_e('Filtrace', 'events-and-bookings'); ?></p>
+        <!-- <p class="eab-filters__label caps"><?php #esc_html_e('Filtrace', 'events-and-bookings'); ?></p> -->
         <a class="eab-filters__reset caps" href="<?php echo esc_url($reset_url); ?>">
             <?php esc_html_e('Obnovit filtr', 'events-and-bookings'); ?>
         </a>
     </div>
 
-    <div class="eab-filters__rule" aria-hidden="true"></div>
+    <!-- <div class="eab-filters__rule" aria-hidden="true"></div> -->
 
     <div class="eab-filters__pills" role="group" aria-label="<?php esc_attr_e('Filtrace', 'events-and-bookings'); ?>">
         <?php foreach ($pills as $pill) : ?>
