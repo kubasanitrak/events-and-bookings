@@ -11,11 +11,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$filter_action  = !empty($filter_action) ? $filter_action : '';
+$filter_action  = !empty($filter_action) ? $filter_action : get_permalink();
 $filter_context = !empty($filter_context) ? $filter_context : 'events';
 $reset_params   = !empty($reset_params) && is_array($reset_params) ? $reset_params : EAB_Query::get_all_filter_params();
 $pills          = EAB_Query::get_filter_pills($filter_context);
-$reset_url      = EAB_Query::get_filter_reset_url($filter_action, $reset_params);
+$base_url       = EAB_Query::get_filter_base_url($filter_action, $reset_params);
+$reset_url      = EAB_Query::get_filter_reset_url($base_url, $reset_params);
 ?>
 <div class="eab-filters eab-filters--pills" data-eab-filter-context="<?php echo esc_attr($filter_context); ?>">
     <div class="eab-filters__head">
@@ -31,7 +32,7 @@ $reset_url      = EAB_Query::get_filter_reset_url($filter_action, $reset_params)
         <?php foreach ($pills as $pill) : ?>
             <?php
             $url = EAB_Query::get_filter_toggle_url(
-                $filter_action,
+                $base_url,
                 $pill['param'],
                 $pill['slug'],
                 $pill['key']

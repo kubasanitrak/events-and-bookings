@@ -283,6 +283,55 @@ class EAB_Query {
     }
 
     /**
+     * Active URL filter params as [param => slug], for seeding pill base URLs
+     * so toggling one pill preserves the others.
+     *
+     * @param string[] $only Optional list of param names to include.
+     * @return array<string, string>
+     */
+    public static function get_active_filter_query_args($only = array()) {
+        $map = array(
+            self::GET_TYPE      => self::get_url_type_override(),
+            self::GET_AUDIENCE  => self::get_param(self::GET_AUDIENCE, ''),
+            self::GET_SCHEDULE  => self::get_param(self::GET_SCHEDULE, ''),
+            self::GET_KIND      => self::get_param(self::GET_KIND, ''),
+            self::GET_REGION    => self::get_param(self::GET_REGION, ''),
+            self::GET_AGE_GROUP => self::get_param(self::GET_AGE_GROUP, ''),
+            self::GET_SKILL_LEVEL => self::get_param(self::GET_SKILL_LEVEL, ''),
+            self::GET_GENDER    => self::get_param(self::GET_GENDER, ''),
+        );
+
+        $args = array();
+        foreach ($map as $param => $slug) {
+            if ($slug === '' || $slug === null) {
+                continue;
+            }
+            if (!empty($only) && !in_array($param, $only, true)) {
+                continue;
+            }
+            $args[$param] = $slug;
+        }
+
+        return $args;
+    }
+
+    /**
+     * Build a pill base URL: page URL + currently active filters.
+     *
+     * @param string   $page_url
+     * @param string[] $only Optional list of param names to keep.
+     * @return string
+     */
+    public static function get_filter_base_url($page_url, $only = array()) {
+        $args = self::get_active_filter_query_args($only);
+        if (empty($args)) {
+            return $page_url;
+        }
+
+        return add_query_arg($args, $page_url);
+    }
+
+    /**
      * @param string $base_url
      * @param string $param
      * @param string $slug

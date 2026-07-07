@@ -96,7 +96,7 @@ class EAB_Shortcodes {
             'title'         => $atts['title'],
             'layout'        => 'list',
             'show_filters'  => filter_var($atts['show_filters'], FILTER_VALIDATE_BOOLEAN),
-            'filter_action' => $atts['filter_action'] ? esc_url($atts['filter_action']) : '',
+            'filter_action' => $this->resolve_filter_action($atts['filter_action']),
             'preset_atts'   => $atts,
         );
         $this->load_partial('events-list', $context);
@@ -144,7 +144,7 @@ class EAB_Shortcodes {
             'adults_query'  => $adults_query,
             'kids_title'    => $atts['kids_title'],
             'adults_title'  => $atts['adults_title'],
-            'filter_action' => $atts['filter_action'] ? esc_url($atts['filter_action']) : '',
+            'filter_action' => $this->resolve_filter_action($atts['filter_action']),
         );
         $this->load_partial('trainings-list', $context);
         wp_reset_postdata();
@@ -209,6 +209,34 @@ class EAB_Shortcodes {
             'class'   => $atts['class'],
         ));
         return ob_get_clean();
+    }
+
+    /**
+     * Resolve the listing filter base URL.
+     *
+     * Empty → current page permalink. Root-relative path (e.g. "/akce/") →
+     * absolute URL respecting subdirectory installs. Absolute → left as-is.
+     *
+     * @param string $filter_action
+     * @return string
+     */
+    private function resolve_filter_action($filter_action) {
+        $filter_action = trim((string) $filter_action);
+
+        if ($filter_action === '') {
+            $permalink = get_permalink();
+            return $permalink ? $permalink : '';
+        }
+
+        if (preg_match('#^https?://#i', $filter_action)) {
+            return esc_url($filter_action);
+        }
+
+        if (strpos($filter_action, '/') === 0) {
+            return esc_url(home_url($filter_action));
+        }
+
+        return esc_url($filter_action);
     }
 
     /**
