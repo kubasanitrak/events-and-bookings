@@ -16,10 +16,10 @@ $subheader_back = isset($subheader_back) ? $subheader_back : 'overview';
     </button>
     <div class="eab-dashboard__subheader-profile">
         <div class="eab-dashboard__avatar eab-dashboard__avatar--small" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <!-- <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
                 <path d="M4 20c1.5-4 6-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.5"></path>
-            </svg>
+            </svg> -->
         </div>
         <p class="eab-dashboard__name eab-dashboard__name--small" data-eab-dashboard-name><?php echo esc_html($display_name); ?></p>
     </div>

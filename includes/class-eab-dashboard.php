@@ -58,6 +58,7 @@ class EAB_Dashboard {
         );
 
         ob_start();
+        extract($context, EXTR_SKIP);
         include EAB_PLUGIN_DIR . 'public/partials/dashboard-page.php';
         return ob_get_clean();
     }
@@ -198,7 +199,7 @@ class EAB_Dashboard {
         );
     }
 
-    public function get_user_orders($user_id) {
+    public static function get_user_orders($user_id) {
         global $wpdb;
 
         if (!EAB_DB::table_exists('eab_orders')) {
