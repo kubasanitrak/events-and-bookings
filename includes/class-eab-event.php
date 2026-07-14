@@ -314,4 +314,151 @@ class EAB_Event {
         }
         return self::get_login_url();
     }
+
+    /**
+     * Unix timestamp for the bookable item start (used for cancellation windows).
+     *
+     * @return int|null
+     */
+    public static function get_start_timestamp($post_id) {
+        if (!function_exists('get_field')) {
+            return null;
+        }
+
+        $mode = get_field('schedule_mode', $post_id);
+        if (!$mode) {
+            return null;
+        }
+
+        $date = '';
+        $time = '';
+
+        switch ($mode) {
+            case 'season':
+                $date = get_field('season_start_date', $post_id);
+                $time = get_field('season_start_time', $post_id);
+                break;
+            case 'whole_day':
+                $date = get_field('whole_day_date', $post_id);
+                $time = get_field('whole_day_time_from', $post_id);
+                break;
+            case 'one_off':
+            default:
+                $date = get_field('one_off_date', $post_id);
+                $time = get_field('one_off_time', $post_id);
+                break;
+        }
+
+        if (empty($date)) {
+            return null;
+        }
+
+        $datetime = trim($date . ' ' . ($time ?: '00:00'));
+        $ts       = strtotime($datetime);
+
+        return $ts ? (int) $ts : null;
+    }
+
+    /**
+     * Uppercase date line for dashboard booking detail (e.g. 6–8. BŘEZNA 2026).
+     */
+    public static function get_detail_date_line($post_id) {
+        if (!function_exists('get_field')) {
+            return '';
+        }
+
+        $mode = get_field('schedule_mode', $post_id);
+        if (!$mode) {
+            return '';
+        }
+
+        switch ($mode) {
+            case 'season':
+                return self::format_detail_date_range(
+                    get_field('season_start_date', $post_id),
+                    get_field('season_end_date', $post_id)
+                );
+            case 'whole_day':
+                return self::format_detail_single_date(get_field('whole_day_date', $post_id));
+            case 'one_off':
+            default:
+                return self::format_detail_single_date(get_field('one_off_date', $post_id));
+        }
+    }
+
+    private static function format_detail_single_date($value) {
+        $ts = !empty($value) ? strtotime($value) : false;
+        if (!$ts) {
+            return '';
+        }
+
+        return mb_strtoupper(date_i18n('j. F Y', $ts));
+    }
+
+    private static function format_detail_date_range($start, $end) {
+        $ts1 = !empty($start) ? strtotime($start) : false;
+        if (!$ts1) {
+            return '';
+        }
+
+        $ts2 = !empty($end) ? strtotime($end) : false;
+        if (!$ts2 || $start === $end) {
+            return mb_strtoupper(date_i18n('j. F Y', $ts1));
+        }
+
+        $d1 = (int) date('j', $ts1);
+        $m1 = (int) date('n', $ts1);
+        $y1 = (int) date('Y', $ts1);
+        $d2 = (int) date('j', $ts2);
+        $m2 = (int) date('n', $ts2);
+        $y2 = (int) date('Y', $ts2);
+
+        if ($m1 === $m2 && $y1 === $y2) {
+            $month_year = mb_strtoupper(date_i18n('F Y', $ts1));
+            return sprintf('%d–%d. %s', $d1, $d2, $month_year);
+        }
+
+        return mb_strtoupper(
+            sprintf('%s – %s', date_i18n('j. F Y', $ts1), date_i18n('j. F Y', $ts2))
+        );
+    }
+
+    /**
+     * Uppercase location line for dashboard detail.
+     */
+    public static function get_detail_location_line($post_id) {
+        if (!function_exists('get_field')) {
+            return '';
+        }
+
+        $place = trim((string) get_field('place_text', $post_id));
+        return $place !== '' ? mb_strtoupper(wp_strip_all_tags($place)) : '';
+    }
+
+    /**
+     * Resolve optional service slugs to human labels.
+     *
+     * @param array $selected_slugs
+     * @return string[]
+     */
+    public static function get_service_labels($post_id, array $selected_slugs) {
+        if (empty($selected_slugs)) {
+            return array();
+        }
+
+        $rows   = EAB_Pricing::get_optional_services($post_id);
+        $labels = array();
+
+        foreach ($rows as $row) {
+            $slug = isset($row['slug']) ? $row['slug'] : '';
+            if ($slug && in_array($slug, $selected_slugs, true)) {
+                $label = isset($row['label']) ? $row['label'] : $slug;
+                if ($label !== '') {
+                    $labels[] = $label;
+                }
+            }
+        }
+
+        return $labels;
+    }
 }

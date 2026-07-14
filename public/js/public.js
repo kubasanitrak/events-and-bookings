@@ -173,7 +173,125 @@
     $(function () {
         initCheckout();
         initFilterPills();
+        initDashboard();
     });
+
+    function initDashboard() {
+        var $root = $('[data-eab-dashboard]');
+        if (!$root.length) {
+            return;
+        }
+
+        var $panels = $root.find('.eab-dashboard__panel');
+        var confirmCancel = (cfg.i18n && cfg.i18n.confirm_cancel)
+            ? cfg.i18n.confirm_cancel
+            : 'Opravdu chcete zrušit tuto rezervaci?';
+        var rescheduleSoon = (cfg.i18n && cfg.i18n.reschedule_soon)
+            ? cfg.i18n.reschedule_soon
+            : 'Funkce přesunu rezervace bude brzy k dispozici. Kontaktujte nás prosím.';
+
+        function normalizeTarget(target) {
+            if (!target || target === 'overview') {
+                return 'overview';
+            }
+            return String(target).replace(/^#/, '');
+        }
+
+        function showPanel(target, pushHash) {
+            var id = normalizeTarget(target);
+            var $match = $panels.filter('[data-panel="' + id + '"]');
+            if (!$match.length) {
+                id = 'overview';
+                $match = $panels.filter('[data-panel="overview"]');
+            }
+
+            $panels.removeClass('is-active').attr('aria-hidden', 'true');
+            $match.addClass('is-active').attr('aria-hidden', 'false');
+
+            if (pushHash !== false) {
+                var hash = id === 'overview' ? '' : '#' + id;
+                if (window.location.hash !== hash) {
+                    if (hash) {
+                        window.history.pushState({ eabDashboard: id }, '', hash);
+                    } else if (window.location.hash) {
+                        window.history.pushState({ eabDashboard: id }, '', window.location.pathname + window.location.search);
+                    }
+                }
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        function panelFromHash() {
+            var hash = window.location.hash.replace(/^#/, '');
+            return hash || 'overview';
+        }
+
+        $root.on('click', '[data-eab-dashboard-go]', function (e) {
+            e.preventDefault();
+            showPanel($(this).data('eab-dashboard-go'));
+        });
+
+        $root.on('click', '[data-eab-dashboard-cancel]', function () {
+            if (!window.confirm(confirmCancel)) {
+                return;
+            }
+
+            var $panel = $(this).closest('.eab-dashboard__panel');
+            var orderId = $panel.data('order-id');
+            var itemId = $panel.data('item-id');
+            var $btn = $(this).prop('disabled', true);
+
+            post('eab_dashboard_cancel_order', {
+                order_id: orderId,
+                item_id: itemId
+            }, function (data, err) {
+                $btn.prop('disabled', false);
+                if (err && err.message) {
+                    window.alert(err.message);
+                    return;
+                }
+                if (data && data.message) {
+                    window.alert(data.message);
+                }
+                window.location.hash = 'bookings';
+                window.location.reload();
+            });
+        });
+
+        $root.on('click', '[data-eab-dashboard-reschedule]', function () {
+            window.alert(rescheduleSoon);
+        });
+
+        $root.on('submit', '[data-eab-dashboard-settings]', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $notice = $root.find('[data-eab-settings-notice]');
+            var $submit = $form.find('[type="submit"]').prop('disabled', true);
+
+            post('eab_dashboard_save_profile', $form.serialize(), function (data, err) {
+                $submit.prop('disabled', false);
+                if (err && err.message) {
+                    $notice.removeClass('eab-dashboard__notice--hidden eab-dashboard__notice--success')
+                        .addClass('eab-dashboard__notice--error')
+                        .text(err.message);
+                    return;
+                }
+                if (data && data.full_name) {
+                    $root.find('[data-eab-dashboard-name]').text(data.full_name);
+                }
+                $notice.removeClass('eab-dashboard__notice--hidden eab-dashboard__notice--error')
+                    .addClass('eab-dashboard__notice--success')
+                    .text((data && data.message) ? data.message : 'Uloženo.');
+            });
+        });
+
+        window.addEventListener('popstate', function () {
+            showPanel(panelFromHash(), false);
+        });
+
+        showPanel(panelFromHash(), false);
+    }
 
     function initFilterPills() {
         $(document).on('click', '.eab-filter-pill', function (e) {

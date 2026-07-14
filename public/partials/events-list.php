@@ -16,7 +16,8 @@ $filter_action = $filter_action ?: get_permalink();
 <div class="eab-listing eab-listing--grid eab-listing--events">
     <?php if (!empty($title)) : ?>
         <header class="eab-listing__header">
-            <h2 class="eab-listing__title"><?php echo esc_html($title); ?></h2>
+            <h5 class="section-headline caps eab-listing__title"><?php echo esc_html($title); ?></h5>
+            <div class="eab-trainings__rule" aria-hidden="true"></div>
         </header>
     <?php endif; ?>
 

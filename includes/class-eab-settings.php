@@ -14,6 +14,8 @@ class EAB_Settings {
 
     const OPT_BASKET_MULTIPLE_EVENTS = 'eab_basket_allow_multiple_events';
     const OPT_CHECKOUT_INVOICE_ENABLED = 'eab_checkout_invoice_enabled';
+    const OPT_CANCEL_HOURS_TRAINING = 'eab_cancel_hours_training';
+    const OPT_CANCEL_HOURS_EVENT = 'eab_cancel_hours_event';
 
     public function __construct() {
         add_action('admin_init', array($this, 'register_settings'));
@@ -23,6 +25,8 @@ class EAB_Settings {
         return array(
             self::OPT_BASKET_MULTIPLE_EVENTS   => 0,
             self::OPT_CHECKOUT_INVOICE_ENABLED => 1,
+            self::OPT_CANCEL_HOURS_TRAINING    => 12,
+            self::OPT_CANCEL_HOURS_EVENT       => 72,
         );
     }
 
@@ -58,6 +62,18 @@ class EAB_Settings {
         );
     }
 
+    /**
+     * Hours before start when member may cancel without reschedule flow.
+     */
+    public static function cancel_hours_before_start($object_type) {
+        $is_training = $object_type === EAB_Post_Types::POST_TYPE_TRAINING;
+        $option    = $is_training ? self::OPT_CANCEL_HOURS_TRAINING : self::OPT_CANCEL_HOURS_EVENT;
+        $default   = $is_training ? 12 : 72;
+        $hours     = (int) get_option($option, $default);
+
+        return max(0, (int) apply_filters('eab_cancel_hours_before_start', $hours, $object_type));
+    }
+
     public function register_settings() {
         register_setting('eab_settings', self::OPT_BASKET_MULTIPLE_EVENTS, array(
             'type'              => 'boolean',
@@ -69,6 +85,20 @@ class EAB_Settings {
             'sanitize_callback' => array($this, 'sanitize_checkbox'),
             'default'           => 1,
         ));
+        register_setting('eab_settings', self::OPT_CANCEL_HOURS_TRAINING, array(
+            'type'              => 'integer',
+            'sanitize_callback' => array($this, 'sanitize_positive_int'),
+            'default'           => 12,
+        ));
+        register_setting('eab_settings', self::OPT_CANCEL_HOURS_EVENT, array(
+            'type'              => 'integer',
+            'sanitize_callback' => array($this, 'sanitize_positive_int'),
+            'default'           => 72,
+        ));
+    }
+
+    public function sanitize_positive_int($value) {
+        return max(0, (int) $value);
     }
 
     public function sanitize_checkbox($value) {

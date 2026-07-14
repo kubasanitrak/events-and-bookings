@@ -13,6 +13,7 @@
 @import '4-objects/_classes';
 
 @import '5-components/_05-auth';
+@import '5-components/_06-dashboard';
 
 @import '5-components/_00-css3-transforms.scss';
 /* Events and Bookings — listings, detail, forms, checkout */
@@ -493,6 +494,9 @@
 	&__price {
 		margin: calc(var(--gap) * 0.25) 0;
 	}
+	&__price {
+		font-size: $fz-H4;
+	}
 
 	&__hero {
 		// margin: calc(var(--pad-T) * 1.2) 0;
@@ -516,21 +520,70 @@
 			font-size: $fz-H2;
 		}
 	}
+	&__header {
+		padding-inline: var(--pad-R);
+	}
 
 	&__muted {
 		color: var(--gray2);
 	}
+	&__col {
+		ul, ol {
+			list-style: none;
+		}
+		h5, h6 {
+			&.border-T {
+				padding-top: calc(var(--pad-T) * .25);
+			}
+		}
+		* + h5,
+		* + h6 {
+			margin-top: calc(var(--pad-T) * 1.333333);
+		}
+	}
+	&__cta-container {
+		text-align: center;
+		padding-block: calc(var(--pad-T) * 1.3333333) calc(var(--pad-T) * 2.666666);
+	}
 }
 
-.eab-gallery {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-	gap: calc(var(--gap) * 0.75);
+.eab-item {
+	&--subtitle {
+		&.border-B {
+			padding-bottom: calc(var(--pad-T) * .25);
+			margin-bottom: calc(var(--pad-T) * .4);
+		}
+	}
+}
 
-	&__img {
+	
+
+.eab-detail__gallery {
+	padding: var(--gap) var(--pad-R) calc(var(--pad-T) * 2.66666);
+	// display: grid;
+	// grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	// grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--gap) * 1.0);
+	@include mq(mq-land) {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: flex-start;
+	}
+
+	.eab-gallery__img {
 		width: 100%;
+		@include mq(mq-land) {
+			max-width: calc((100% - var(--gap)) * .5);
+		}
 		height: auto;
-		border-radius: calc(var(--dot-R) * 1.5);
+		border-radius: 0;
+		&.is-portrait {
+			@include mq(mq-land) {
+				max-width: calc((100% - (var(--gap) * 2)) / 3);
+			}
+		}
 	}
 }
 
@@ -541,6 +594,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: calc(var(--gap) * 0.5);
+		justify-content: center;
 	}
 
 	&__hint {
@@ -735,5 +789,3 @@
 		text-align: left;
 	}
 }
-
-

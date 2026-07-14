@@ -68,6 +68,8 @@ class EAB_Activator {
             'eab_basket_cleanup_hours'        => 72,
             'eab_admin_notification_enabled'  => 1,
             'eab_admin_notification_email'  => get_option('admin_email'),
+            EAB_Settings::OPT_CANCEL_HOURS_TRAINING => 12,
+            EAB_Settings::OPT_CANCEL_HOURS_EVENT    => 72,
         );
 
         foreach ($defaults as $key => $value) {

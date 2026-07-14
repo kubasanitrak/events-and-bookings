@@ -19,6 +19,8 @@ class EAB_Admin_Settings {
         $options = array(
             EAB_Settings::OPT_BASKET_MULTIPLE_EVENTS,
             EAB_Settings::OPT_CHECKOUT_INVOICE_ENABLED,
+            EAB_Settings::OPT_CANCEL_HOURS_TRAINING,
+            EAB_Settings::OPT_CANCEL_HOURS_EVENT,
             'eab_bank_transfer_enabled',
             'eab_gopay_enabled',
             'eab_gopay_test_mode',
@@ -109,6 +111,27 @@ class EAB_Admin_Settings {
                                     <?php checked(get_option(EAB_Settings::OPT_CHECKOUT_INVOICE_ENABLED, 1)); ?>>
                                 <?php esc_html_e('Volitelná faktura v pokladně', 'events-and-bookings'); ?>
                             </label>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2><?php esc_html_e('Členský účet', 'events-and-bookings'); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th><label for="eab_cancel_hours_training"><?php esc_html_e('Zrušení tréninku (hodiny před začátkem)', 'events-and-bookings'); ?></label></th>
+                        <td>
+                            <input type="number" min="0" class="small-text" id="eab_cancel_hours_training"
+                                   name="<?php echo esc_attr(EAB_Settings::OPT_CANCEL_HOURS_TRAINING); ?>"
+                                   value="<?php echo esc_attr(get_option(EAB_Settings::OPT_CANCEL_HOURS_TRAINING, 12)); ?>">
+                            <p class="description"><?php esc_html_e('Po uplynutí lhůty se nabídne přesun rezervace místo zrušení.', 'events-and-bookings'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_cancel_hours_event"><?php esc_html_e('Zrušení akce (hodiny před začátkem)', 'events-and-bookings'); ?></label></th>
+                        <td>
+                            <input type="number" min="0" class="small-text" id="eab_cancel_hours_event"
+                                   name="<?php echo esc_attr(EAB_Settings::OPT_CANCEL_HOURS_EVENT); ?>"
+                                   value="<?php echo esc_attr(get_option(EAB_Settings::OPT_CANCEL_HOURS_EVENT, 72)); ?>">
                         </td>
                     </tr>
                 </table>

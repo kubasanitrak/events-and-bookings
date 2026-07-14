@@ -1,37 +1,35 @@
 <?php
 /**
- * @var array $orders
+ * Member dashboard shell with hash-routed panels.
+ *
+ * @var array  $profile
+ * @var array  $groups
+ * @var bool   $invoice_enabled
+ * @var array  $invoice_data
+ * @var string $logout_url
+ * @var string $password_url
+ * @var string $user_email
+ * @var string $dashboard_url
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
-?>
-<div class="eab-dashboard">
-    <h2><?php esc_html_e('Moje rezervace', 'events-and-bookings'); ?></h2>
 
-    <?php if (empty($orders)) : ?>
-        <p><?php esc_html_e('Zatím nemáte žádné objednávky.', 'events-and-bookings'); ?></p>
-    <?php else : ?>
-        <table class="eab-dashboard__orders">
-            <thead>
-                <tr>
-                    <th><?php esc_html_e('Číslo', 'events-and-bookings'); ?></th>
-                    <th><?php esc_html_e('Datum', 'events-and-bookings'); ?></th>
-                    <th><?php esc_html_e('Stav', 'events-and-bookings'); ?></th>
-                    <th><?php esc_html_e('Částka', 'events-and-bookings'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($orders as $order) : ?>
-                    <tr>
-                        <td><?php echo esc_html($order->order_number); ?></td>
-                        <td><?php echo esc_html(date_i18n('j. n. Y H:i', strtotime($order->created_at))); ?></td>
-                        <td><?php echo esc_html(EAB_Dashboard::status_label($order->status)); ?></td>
-                        <td><?php echo esc_html(EAB_Payments::format_price($order->total)); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+$display_name = $profile['full_name'] !== '' ? $profile['full_name'] : __('Uživatel', 'events-and-bookings');
+$all_bookings = array_merge($groups['trainings'], $groups['events']);
+$has_bookings = !empty($all_bookings);
+?>
+<div class="eab-dashboard" data-eab-dashboard>
+    <?php include EAB_PLUGIN_DIR . 'public/partials/dashboard-overview.php'; ?>
+    <?php include EAB_PLUGIN_DIR . 'public/partials/dashboard-bookings.php'; ?>
+
+    <?php foreach ($all_bookings as $booking) : ?>
+        <?php
+        $booking_context = $booking;
+        include EAB_PLUGIN_DIR . 'public/partials/dashboard-booking-detail.php';
+        ?>
+    <?php endforeach; ?>
+
+    <?php include EAB_PLUGIN_DIR . 'public/partials/dashboard-settings.php'; ?>
 </div>

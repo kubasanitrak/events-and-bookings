@@ -195,7 +195,16 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
             <?php foreach ($gallery as $image) :
                 $id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
                 if ($id) :
-                    echo wp_get_attachment_image($id, 'medium_large', false, array('class' => 'eab-gallery__img', 'loading' => 'lazy'));
+                    $CLS = 'lazyload eab-gallery__img';
+                    $size = 'medium';
+                    $img_atts = wp_get_attachment_image_src( $id, $size );
+                    $img_W = $img_atts[1];
+                    $img_H = $img_atts[2];
+                    $ratio = $img_W / $img_H;
+                    $is_portrait = ($ratio < 1) ? ' is-portrait' : '';
+                    $CLS .= $is_portrait;
+                        // echo wp_get_attachment_image($id, 'medium_large', false, array('class' => 'lazyload eab-gallery__img', 'loading' => 'lazy'));
+                    echo wp_get_attachment_image($id, 'medium_large', false, array('class' => $CLS, 'loading' => 'lazy'));
                 endif;
             endforeach; ?>
         </section>

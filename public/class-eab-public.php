@@ -99,6 +99,10 @@ class EAB_Public {
             'nonce'         => wp_create_nonce('eab_public'),
             'is_logged_in'  => is_user_logged_in(),
             'checkout_url'  => EAB_Auth::get_page_url('checkout'),
+            'i18n'          => array(
+                'confirm_cancel'  => __('Opravdu chcete zrušit tuto rezervaci?', 'events-and-bookings'),
+                'reschedule_soon' => __('Funkce přesunu rezervace bude brzy k dispozici. Kontaktujte nás prosím.', 'events-and-bookings'),
+            ),
         ));
     }
 }
