@@ -398,13 +398,42 @@
             "rows": 4
         },
         {
-            "key": "field_eab_program",
+            "key": "field_eab_program_arr",
             "label": "Program",
-            "name": "program",
-            "type": "wysiwyg",
-            "tabs": "all",
-            "toolbar": "full",
-            "media_upload": 1
+            "name": "program_arr",
+            "type": "repeater",
+            "layout": "block",
+            "button_label": "Přidat den / sekci",
+            "sub_fields": [
+                {
+                    "key": "field_eab_program_row_label",
+                    "label": "Nadpis sekce",
+                    "name": "program_row_label",
+                    "type": "text"
+                },
+                {
+                    "key": "field_eab_program_row",
+                    "label": "Řádky programu",
+                    "name": "program_row",
+                    "type": "repeater",
+                    "layout": "table",
+                    "button_label": "Přidat řádek",
+                    "sub_fields": [
+                        {
+                            "key": "field_eab_program_row_time",
+                            "label": "Čas",
+                            "name": "program_row_time",
+                            "type": "text"
+                        },
+                        {
+                            "key": "field_eab_program_row_content",
+                            "label": "Obsah",
+                            "name": "program_row_content",
+                            "type": "text"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "key": "field_eab_gallery",
@@ -438,5 +467,5 @@
     "instruction_placement": "label",
     "active": true,
     "show_in_rest": 1,
-    "modified": 1749043200
+    "modified": 1753036920
 }

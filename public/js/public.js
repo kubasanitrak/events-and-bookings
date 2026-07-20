@@ -33,6 +33,65 @@
         });
     });
 
+    function initQuantitySpinners() {
+        document.querySelectorAll('.eab-quantity').forEach(function (spinner) {
+            if (spinner.getAttribute('data-eab-quantity-ready')) {
+                return;
+            }
+            spinner.setAttribute('data-eab-quantity-ready', '1');
+
+            var input = spinner.querySelector('input[type="number"]');
+            var btnUp = spinner.querySelector('.eab-quantity-up');
+            var btnDown = spinner.querySelector('.eab-quantity-down');
+            if (!input || !btnUp || !btnDown) {
+                return;
+            }
+
+            var min = parseFloat(input.getAttribute('min'));
+            var max = parseFloat(input.getAttribute('max'));
+            if (isNaN(min)) {
+                min = 0;
+            }
+            if (isNaN(max)) {
+                max = Infinity;
+            }
+
+            function setValue(newVal) {
+                input.value = newVal;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            btnUp.addEventListener('click', function () {
+                var oldValue = parseFloat(input.value);
+                if (isNaN(oldValue)) {
+                    oldValue = min;
+                }
+                setValue(oldValue >= max ? oldValue : oldValue + 1);
+            });
+
+            btnDown.addEventListener('click', function () {
+                var oldValue = parseFloat(input.value);
+                if (isNaN(oldValue)) {
+                    oldValue = min;
+                }
+                setValue(oldValue <= min ? oldValue : oldValue - 1);
+            });
+
+            input.addEventListener('change', function () {
+                var val = parseFloat(input.value);
+                if (isNaN(val)) {
+                    input.value = min;
+                    return;
+                }
+                if (val < min) {
+                    input.value = min;
+                } else if (val > max) {
+                    input.value = max;
+                }
+            });
+        });
+    }
+
     // Remove line
     $(document).on('click', '.eab-remove-line', function () {
         var postId = $(this).data('post-id');
@@ -174,6 +233,7 @@
         initCheckout();
         initFilterPills();
         initDashboard();
+        initQuantitySpinners();
     });
 
     function initDashboard() {

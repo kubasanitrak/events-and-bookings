@@ -155,17 +155,33 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
         <?php echo apply_filters('the_content', $post->post_content); ?>
     </div>
 
-    <?php if ($show_program && function_exists('get_field')) :
-        
-        $program  = get_field('program', $post_id);
-        
-        if ($program) : ?>
-                <div class="eab-detail__col even-cols--item">
-                    <h5 class="eab-item--subtitle border-B caps"><?php esc_html_e('Program', 'events-and-bookings'); ?></h5>
-                    <div class="eab-detail__prose"><?php echo wp_kses_post($program); ?></div>
-                </div>
-        <?php endif;
-    endif; ?>
+    <?php if ($show_program && function_exists('have_rows') && have_rows('program_arr', $post_id)) : ?>
+        <div class="eab-detail__col even-cols--item">
+            <h5 class="eab-item--subtitle border-B caps"><?php esc_html_e('Program', 'events-and-bookings'); ?></h5>
+            <?php while (have_rows('program_arr', $post_id)) : the_row(); ?>
+                <?php if ($label = get_sub_field('program_row_label')) : ?>
+                    <div class="programtable-header">
+                        <h5 class="programtable-headline caps"><?php echo esc_html($label); ?></h5>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (have_rows('program_row')) : ?>
+                    <div class="programtable-content">
+                        <?php while (have_rows('program_row')) : the_row(); ?>
+                            <div class="programtable-row">
+                                <div class="programtable-col">
+                                    <p class="plain"><?php echo esc_html((string) get_sub_field('program_row_time')); ?></p>
+                                </div>
+                                <div class="programtable-col">
+                                    <p class="plain"><?php echo esc_html((string) get_sub_field('program_row_content')); ?></p>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php endif; ?>
+            <?php endwhile; ?>
+        </div>
+    <?php endif; ?>
 </section>
 
 <section class="eab-detail__section even-cols pad-B pad-T" data-theme="silky-blue">

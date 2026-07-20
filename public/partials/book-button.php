@@ -31,9 +31,17 @@ $in_basket   = is_user_logged_in() && (new EAB_Basket())->is_in_basket($post_id)
         <a class="eab-btn" href="<?php echo esc_url($checkout); ?>"><?php esc_html_e('Pokračovat v rezervaci', 'events-and-bookings'); ?></a>
     <?php else : ?>
         <div class="eab-book-cta__add">
-            <label for="eab-spots-<?php echo esc_attr($post_id); ?>"><?php esc_html_e('Počet míst', 'events-and-bookings'); ?></label>
-            <input type="number" id="eab-spots-<?php echo esc_attr($post_id); ?>" class="eab-book-spots" min="1" max="20" value="1">
-            <button type="button" class="eab-btn eab-btn--book" data-eab-book="<?php echo esc_attr($post_id); ?>">
+            <div class="eab-spots--container">
+                <label class="eab-book-spots-label caps h5" for="eab-spots-<?php echo esc_attr($post_id); ?>"><?php esc_html_e('Počet míst', 'events-and-bookings'); ?></label>
+                <div class="eab-quantity">
+                    <input type="number" id="eab-spots-<?php echo esc_attr($post_id); ?>" class="eab-book-spots" min="1" max="20" value="1" inputmode="numeric">
+                    <div class="eab-quantity-nav">
+                        <button type="button" class="eab-quantity-button eab-quantity-up" aria-label="<?php esc_attr_e('Přidat místo', 'events-and-bookings'); ?>"></button>
+                        <button type="button" class="eab-quantity-button eab-quantity-down" aria-label="<?php esc_attr_e('Odebrat místo', 'events-and-bookings'); ?>"></button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="eab-btn eab-btn--book" data-eab-book="<?php echo esc_attr($post_id); ?>" data-theme="blue">
                 <?php esc_html_e('Rezervovat místo', 'events-and-bookings'); ?>
             </button>
         </div>
