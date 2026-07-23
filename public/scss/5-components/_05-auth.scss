@@ -187,9 +187,11 @@
 	font-size: $fz-MINOR;
 	cursor: pointer;
 
-	input[type="checkbox"] {
+	input[type="checkbox"],
+	input[type="radio"] {
 		position: relative;
 		appearance: none;
+		-webkit-appearance: none;
 		flex-shrink: 0;
 		width: var(--gap);
 		height: var(--gap);

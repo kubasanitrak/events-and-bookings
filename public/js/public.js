@@ -102,8 +102,39 @@
 
     // Invoice toggle
     $(document).on('change', '#eab_want_invoice', function () {
-        $('.eab-invoice-fields').toggle($(this).is(':checked'));
+        $('.eab-invoice-fields').prop('hidden', !$(this).is(':checked'));
     });
+
+    var attendeePlaceholders = {
+        first_name: 'Anna',
+        last_name: 'Beachová'
+    };
+
+    function escapeAttr(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function buildAttendeeField(field, value) {
+        var key = field.field_key || field.name;
+        var label = field.label || key;
+        var type = field.field_type || 'text';
+        var req = field.required ? ' required' : '';
+        var placeholder = attendeePlaceholders[key] ? ' placeholder="' + escapeAttr(attendeePlaceholders[key]) + '"' : '';
+        var $col = $('<div class="auth-form__col auth-form__field"></div>');
+        $col.append('<label>' + escapeAttr(label) + '</label>');
+        if (type === 'textarea') {
+            $col.append('<textarea name="' + escapeAttr(key) + '"' + req + '>' + escapeAttr(value) + '</textarea>');
+        } else if (type === 'date') {
+            $col.append('<input type="date" name="' + escapeAttr(key) + '" value="' + escapeAttr(value) + '"' + req + '>');
+        } else {
+            $col.append('<input type="text" name="' + escapeAttr(key) + '" value="' + escapeAttr(value) + '"' + placeholder + req + '>');
+        }
+        return $col;
+    }
 
     function renderAttendees($container, spots, fieldDefs, existing) {
         existing = existing || [];
@@ -118,24 +149,35 @@
         for (var i = 0; i < spots; i++) {
             var row = existing[i] || {};
             var $block = $('<div class="eab-attendee-block" data-index="' + i + '"></div>');
-            $block.append('<h5>Účastník ' + (i + 1) + '</h5>');
+            var nameKeys = { first_name: true, last_name: true };
+            var nameFields = [];
+            var otherFields = [];
+
             defs.forEach(function (field) {
                 var key = field.field_key || field.name;
-                var label = field.label || key;
-                var type = field.field_type || 'text';
-                var req = field.required ? ' required' : '';
-                var val = row[key] || '';
-                var $row = $('<div class="eab-auth-form__row"></div>');
-                $row.append('<label>' + label + '</label>');
-                if (type === 'textarea') {
-                    $row.append('<textarea name="' + key + '"' + req + '>' + val + '</textarea>');
-                } else if (type === 'date') {
-                    $row.append('<input type="date" name="' + key + '" value="' + val + '"' + req + '>');
+                if (nameKeys[key]) {
+                    nameFields.push(field);
                 } else {
-                    $row.append('<input type="text" name="' + key + '" value="' + val + '"' + req + '>');
+                    otherFields.push(field);
                 }
+            });
+
+            if (nameFields.length) {
+                var $nameRow = $('<div class="auth-form__row auth-form__row--half"></div>');
+                nameFields.forEach(function (field) {
+                    var key = field.field_key || field.name;
+                    $nameRow.append(buildAttendeeField(field, row[key] || ''));
+                });
+                $block.append($nameRow);
+            }
+
+            otherFields.forEach(function (field) {
+                var key = field.field_key || field.name;
+                var $row = $('<div class="auth-form__row"></div>');
+                $row.append(buildAttendeeField(field, row[key] || ''));
                 $block.append($row);
             });
+
             $list.append($block);
         }
     }
