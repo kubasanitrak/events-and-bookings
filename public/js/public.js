@@ -218,6 +218,64 @@
         return lines;
     }
 
+    var checkoutTotalsTimer = null;
+    var checkoutTotalsRequest = null;
+
+    function applyCheckoutTotals(data) {
+        if (!data) {
+            return;
+        }
+        if (data.total_formatted) {
+            $('#eab-checkout-total').text(data.total_formatted);
+        }
+        if (data.lines && data.lines.length) {
+            data.lines.forEach(function (line) {
+                if (!line || !line.post_id || !line.line_total_formatted) {
+                    return;
+                }
+                $('.eab-line-total[data-post-id="' + line.post_id + '"]').text(line.line_total_formatted);
+            });
+        }
+    }
+
+    function updateCheckoutTotals() {
+        var $checkout = $('#eab-checkout');
+        if (!$checkout.length) {
+            return;
+        }
+
+        if (checkoutTotalsRequest && checkoutTotalsRequest.abort) {
+            checkoutTotalsRequest.abort();
+        }
+
+        var payload = {
+            action: 'eab_save_basket_from_checkout',
+            nonce: cfg.nonce,
+            lines: JSON.stringify(collectAllLines())
+        };
+
+        checkoutTotalsRequest = $.post(cfg.ajax_url, payload).done(function (res) {
+            if (res && res.success) {
+                applyCheckoutTotals(res.data);
+                return;
+            }
+            if (res && res.data && res.data.message) {
+                window.alert(res.data.message);
+            }
+        }).fail(function (xhr) {
+            if (xhr && xhr.statusText === 'abort') {
+                return;
+            }
+        }).always(function () {
+            checkoutTotalsRequest = null;
+        });
+    }
+
+    function scheduleCheckoutTotalsUpdate() {
+        clearTimeout(checkoutTotalsTimer);
+        checkoutTotalsTimer = setTimeout(updateCheckoutTotals, 150);
+    }
+
     function initCheckout() {
         var $checkout = $('#eab-checkout');
         if (!$checkout.length) {
@@ -234,7 +292,23 @@
         $(document).on('change', '.eab-spots-input', function () {
             var $line = $(this).closest('.eab-checkout-line');
             var spots = parseInt($(this).val(), 10) || 1;
-            renderAttendees($line.find('.eab-checkout-attendees'), spots);
+            var existing = [];
+            $line.find('.eab-attendee-block').each(function () {
+                var row = {};
+                $(this).find('input, textarea, select').each(function () {
+                    var n = $(this).attr('name');
+                    if (n) {
+                        row[n] = $(this).val();
+                    }
+                });
+                existing.push(row);
+            });
+            renderAttendees($line.find('.eab-checkout-attendees'), spots, null, existing);
+            scheduleCheckoutTotalsUpdate();
+        });
+
+        $(document).on('change', '.eab-service-cb', function () {
+            scheduleCheckoutTotalsUpdate();
         });
     }
 

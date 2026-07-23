@@ -63,22 +63,43 @@ class EAB_Checkout {
         }
 
         $basket = new EAB_Basket();
+        $line_totals = array();
+
         foreach ($lines as $line) {
             $post_id = isset($line['post_id']) ? (int) $line['post_id'] : 0;
-            $meta    = isset($line['line_meta']) ? $line['line_meta'] : array();
+            $meta    = isset($line['line_meta']) && is_array($line['line_meta']) ? $line['line_meta'] : array();
             if (!$post_id) {
                 continue;
             }
-            $validation = self::validate_line_meta($post_id, $meta);
+
+            // Live checkout updates only need spots/capacity; attendees are validated on submit.
+            $validation = self::validate_line_meta($post_id, $meta, false);
             if (is_wp_error($validation)) {
                 wp_send_json_error(array('message' => $validation->get_error_message()));
             }
+
             if ($basket->is_in_basket($post_id)) {
-                $basket->update_line($post_id, $meta);
+                $updated = $basket->update_line($post_id, $meta);
+                if (is_wp_error($updated)) {
+                    wp_send_json_error(array('message' => $updated->get_error_message()));
+                }
             }
+
+            $pricing = EAB_Pricing::calculate_line($post_id, $meta);
+            $line_totals[] = array(
+                'post_id'              => $post_id,
+                'line_total'           => $pricing['line_total'],
+                'line_total_formatted' => EAB_Payments::format_price($pricing['line_total']),
+            );
         }
 
-        wp_send_json_success(array('total' => $basket->get_total()));
+        $total = $basket->get_total();
+
+        wp_send_json_success(array(
+            'total'           => $total,
+            'total_formatted' => EAB_Payments::format_price($total),
+            'lines'           => $line_totals,
+        ));
     }
 
     public function ajax_process_checkout() {
@@ -260,7 +281,13 @@ class EAB_Checkout {
         return $order_id;
     }
 
-    public static function validate_line_meta($post_id, array $meta) {
+    /**
+     * @param int   $post_id
+     * @param array $meta
+     * @param bool  $require_attendees When false, only spots/capacity are checked (live checkout updates).
+     * @return true|WP_Error
+     */
+    public static function validate_line_meta($post_id, array $meta, $require_attendees = true) {
         $spots = EAB_Basket::validate_spot_count($meta['spots'] ?? 1);
         if (is_wp_error($spots)) {
             return $spots;
@@ -269,6 +296,10 @@ class EAB_Checkout {
         $capacity = EAB_Capacity::can_reserve($post_id, $spots);
         if (is_wp_error($capacity)) {
             return $capacity;
+        }
+
+        if (!$require_attendees) {
+            return true;
         }
 
         $attendees = isset($meta['attendees']) && is_array($meta['attendees']) ? $meta['attendees'] : array();
