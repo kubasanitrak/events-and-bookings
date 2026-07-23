@@ -12,7 +12,11 @@ class EAB_Payments {
     public static function format_price($amount) {
         $symbol   = get_option('eab_currency_symbol', 'Kč');
         $position = get_option('eab_currency_position', 'after');
-        $formatted = number_format_i18n((float) $amount, 0);
+        $formatted = html_entity_decode(
+            number_format_i18n((float) $amount, 0),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
 
         if ($position === 'before') {
             return $symbol . ' ' . $formatted;
