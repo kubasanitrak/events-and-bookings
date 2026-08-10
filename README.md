@@ -47,18 +47,18 @@ Verification link format: `?eab_verify=1&eab_uid=ID&eab_token=TOKEN` (home URL o
 | `[eab_dashboard]` | `/muj-ucet/` |
 | `[eab_basket_count]` | header widget |
 
-Flow: detail → **Rezervovat místo** → pokladna (účastníci, služby) → bankovní převod nebo GoPay → potvrzení.
+Flow: detail → **Rezervovat místo** → pokladna (účastníci, služby) → bankovní převod (Fakturoid proforma + QR) → potvrzení po spárování platby.
 
-Configure under **Akce a rezervace → Nastavení** (bank account, GoPay, Fakturoid, payment deadline, admin e-mails).
+Configure under **Akce a rezervace → Nastavení** (bank account, Fakturoid + webhook, payment deadline, admin e-mails). GoPay card payments are temporarily disabled (credentials kept for later).
 
 | Shortcode | Page |
 |-----------|------|
 | `[eab_payment_success]` | `/platba-uspesna/` |
 | `[eab_payment_failed]` | `/platba-neuspesna/` |
 
-Admin: **Objednávky** — confirm bank transfer manually (`Potvrdit platbu`). GoPay orders complete via gateway notification. QR payment uses Paylibo API when account number + bank code are set. Fakturoid invoice PDF is attached to payment confirmation e-mail when enabled.
+Admin: **Objednávky** — manual **Potvrdit platbu** remains as backup. Normal path: Fakturoid bank pairing → webhook `invoice_paid` → site confirms seats + e-mail. QR payment uses Paylibo with Fakturoid VS when a proforma exists.
 
-**GoPay sandbox testing:** see [docs/gopay-sandbox-testing.md](docs/gopay-sandbox-testing.md). In **Nastavení → GoPay**, use **Otestovat připojení** for OAuth + callback URL preview.
+**Fakturoid setup:** see [docs/fakturoid-webhook.md](docs/fakturoid-webhook.md). Enable in settings, paste the shown webhook URL into Fakturoid (event `invoice_paid`), set the same Authorization / `auth_header` value. Use separate Fakturoid firms (or webhook URLs) for staging vs production.
 
 ## Composer
 

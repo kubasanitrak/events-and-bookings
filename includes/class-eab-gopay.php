@@ -17,6 +17,12 @@ class EAB_GoPay {
     }
 
     public static function is_enabled() {
+        // Card payments temporarily disabled — Fakturoid bank transfer is the active path.
+        // Re-enable later via: add_filter('eab_gopay_available', '__return_true');
+        if (!apply_filters('eab_gopay_available', false)) {
+            return false;
+        }
+
         return (bool) get_option('eab_gopay_enabled', 0)
             && get_option('eab_gopay_client_id', '')
             && get_option('eab_gopay_client_secret', '')

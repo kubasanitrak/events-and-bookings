@@ -891,20 +891,77 @@
 }
 
 .eab-bank-transfer {
+	&__hold {
+		margin: 0 0 var(--gap);
+		font-size: $fz-H5;
+		line-height: 1.35;
+	}
+
+	&__layout {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--gap) * 1.25);
+		margin: var(--gap) 0;
+
+		@include mq(mq-land) {
+			flex-direction: row;
+			align-items: flex-start;
+			justify-content: space-between;
+		}
+	}
+
+	&__details {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
 	&__table {
 		width: 100%;
 		max-width: 28rem;
-		margin: var(--gap) 0;
+		margin: 0 0 var(--gap);
 
 		th {
 			text-align: left;
 			padding-right: var(--gap);
+			vertical-align: top;
 		}
+	}
+
+	&__actions {
+		margin: 0 0 var(--gap);
+	}
+
+	&__qr {
+		flex: 0 0 auto;
+		text-align: center;
+
+		@include mq(mq-land) {
+			padding-left: var(--gap);
+		}
+	}
+
+	&__qr-label {
+		margin: 0 0 calc(var(--gap) * 0.5);
+		font-size: $fz-H5;
+		font-weight: 600;
 	}
 
 	&__expires {
 		margin: var(--gap) 0;
 		font-size: $fz-H5;
+	}
+
+	&__note {
+		color: var(--gray2);
+	}
+}
+
+.eab-qr-code {
+	img {
+		display: block;
+		margin-inline: auto;
+		max-width: 100%;
+		height: auto;
 	}
 }
 

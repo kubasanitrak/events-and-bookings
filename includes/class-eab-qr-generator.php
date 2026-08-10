@@ -45,19 +45,20 @@ class EAB_QR_Generator {
             return null;
         }
 
-        $message = sprintf(__('Objednávka %s', 'events-and-bookings'), $order->order_number);
+        $message = __('Místo držíme. Jakmile platbu přijmeme, pošleme potvrzení.', 'events-and-bookings');
+        $vs = EAB_Fakturoid::get_variable_symbol($order);
 
         return $this->generate_payment_qr(
             $order->total,
             $order->currency ?: 'CZK',
-            $order->order_number,
+            $vs,
             $message,
             $size
         );
     }
 
-    public function render_qr_html($amount, $variable_symbol = '', $size = 250) {
-        $url = $this->generate_payment_qr($amount, 'CZK', $variable_symbol, '', $size);
+    public function render_qr_html($amount, $variable_symbol = '', $size = 250, $message = '') {
+        $url = $this->generate_payment_qr($amount, 'CZK', $variable_symbol, $message, $size);
 
         if (!$url) {
             return '<p class="eab-qr-error">' . esc_html__('QR kód nelze vygenerovat. Použijte údaje výše.', 'events-and-bookings') . '</p>';

@@ -33,7 +33,8 @@ class EAB_Payments {
         EAB_Checkout::update_order_status($order_id, 'paid', $transaction_id);
 
         if (EAB_Fakturoid::is_enabled()) {
-            EAB_Fakturoid::create_invoice_for_order($order_id);
+            // Refresh existing proforma PDF/meta — never create a second document.
+            EAB_Fakturoid::sync_paid_document($order_id);
         }
 
         EAB_Emails::send_payment_confirmed_email($order_id);

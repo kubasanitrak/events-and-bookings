@@ -33,6 +33,7 @@ class EAB_Admin_Settings {
             'eab_fakturoid_api_token',
             'eab_fakturoid_user_agent',
             'eab_fakturoid_vat_rate',
+            'eab_fakturoid_webhook_auth',
             'eab_order_expiry_hours',
             'eab_order_expiry_notification',
             'eab_basket_cleanup_hours',
@@ -177,46 +178,35 @@ class EAB_Admin_Settings {
                     <tr>
                         <th><?php esc_html_e('GoPay', 'events-and-bookings'); ?></th>
                         <td>
-                            <input type="hidden" name="eab_gopay_enabled" value="0">
-                            <label><input type="checkbox" name="eab_gopay_enabled" value="1" <?php checked(get_option('eab_gopay_enabled', 0)); ?>>
-                                <?php esc_html_e('Povolit platbu kartou', 'events-and-bookings'); ?></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="eab_gopay_goid">GoID</label></th>
-                        <td><input type="text" class="regular-text" id="eab_gopay_goid" name="eab_gopay_goid" value="<?php echo esc_attr(get_option('eab_gopay_goid', '')); ?>"></td>
-                    </tr>
-                    <tr>
-                        <th><label for="eab_gopay_client_id"><?php esc_html_e('Client ID', 'events-and-bookings'); ?></label></th>
-                        <td><input type="text" class="regular-text" id="eab_gopay_client_id" name="eab_gopay_client_id" value="<?php echo esc_attr(get_option('eab_gopay_client_id', '')); ?>"></td>
-                    </tr>
-                    <tr>
-                        <th><label for="eab_gopay_client_secret"><?php esc_html_e('Client Secret', 'events-and-bookings'); ?></label></th>
-                        <td><input type="password" class="regular-text" id="eab_gopay_client_secret" name="eab_gopay_client_secret" value="<?php echo esc_attr(get_option('eab_gopay_client_secret', '')); ?>" autocomplete="new-password"></td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('GoPay režim', 'events-and-bookings'); ?></th>
-                        <td>
-                            <input type="hidden" name="eab_gopay_test_mode" value="0">
-                            <label><input type="checkbox" name="eab_gopay_test_mode" value="1" <?php checked(get_option('eab_gopay_test_mode', 1)); ?>>
-                                <?php esc_html_e('Sandbox (testovací brána)', 'events-and-bookings'); ?></label>
-                            <p class="description"><?php esc_html_e('Notifikační URL:', 'events-and-bookings'); ?> <code><?php echo esc_html(EAB_GoPay::get_notification_url()); ?></code></p>
-                            <p>
-                                <button type="button" class="button" id="eab-gopay-test-connectivity">
-                                    <?php esc_html_e('Otestovat připojení', 'events-and-bookings'); ?>
-                                </button>
-                                <span class="description"><?php esc_html_e('OAuth2 ping a náhled URL (uložte nastavení před testem).', 'events-and-bookings'); ?></span>
-                            </p>
                             <p class="description">
-                                <?php
-                                printf(
-                                    /* translators: %s: relative path to doc */
-                                    esc_html__('Podrobný checklist: %s', 'events-and-bookings'),
-                                    '<code>docs/gopay-sandbox-testing.md</code>'
-                                );
-                                ?>
+                                <?php esc_html_e('Platba kartou je dočasně vypnutá. Aktivní je bankovní převod přes Fakturoid (proforma + webhook).', 'events-and-bookings'); ?>
                             </p>
-                            <div id="eab-gopay-test-output" class="eab-gopay-test-output" aria-live="polite"></div>
+                            <details class="eab-gopay-settings-details">
+                                <summary><?php esc_html_e('Uložené GoPay údaje (skryté)', 'events-and-bookings'); ?></summary>
+                                <input type="hidden" name="eab_gopay_enabled" value="0">
+                                <p>
+                                    <label><input type="checkbox" value="1" <?php checked(get_option('eab_gopay_enabled', 0)); ?> disabled>
+                                        <?php esc_html_e('Povolit platbu kartou (nedostupné)', 'events-and-bookings'); ?></label>
+                                </p>
+                                <p>
+                                    <label for="eab_gopay_goid">GoID</label><br>
+                                    <input type="text" class="regular-text" id="eab_gopay_goid" name="eab_gopay_goid" value="<?php echo esc_attr(get_option('eab_gopay_goid', '')); ?>">
+                                </p>
+                                <p>
+                                    <label for="eab_gopay_client_id"><?php esc_html_e('Client ID', 'events-and-bookings'); ?></label><br>
+                                    <input type="text" class="regular-text" id="eab_gopay_client_id" name="eab_gopay_client_id" value="<?php echo esc_attr(get_option('eab_gopay_client_id', '')); ?>">
+                                </p>
+                                <p>
+                                    <label for="eab_gopay_client_secret"><?php esc_html_e('Client Secret', 'events-and-bookings'); ?></label><br>
+                                    <input type="password" class="regular-text" id="eab_gopay_client_secret" name="eab_gopay_client_secret" value="<?php echo esc_attr(get_option('eab_gopay_client_secret', '')); ?>" autocomplete="new-password">
+                                </p>
+                                <input type="hidden" name="eab_gopay_test_mode" value="0">
+                                <p>
+                                    <label><input type="checkbox" name="eab_gopay_test_mode" value="1" <?php checked(get_option('eab_gopay_test_mode', 1)); ?>>
+                                        <?php esc_html_e('Sandbox (testovací brána)', 'events-and-bookings'); ?></label>
+                                </p>
+                                <p class="description"><?php esc_html_e('Notifikační URL:', 'events-and-bookings'); ?> <code><?php echo esc_html(EAB_GoPay::get_notification_url()); ?></code></p>
+                            </details>
                         </td>
                     </tr>
                 </table>
@@ -228,7 +218,8 @@ class EAB_Admin_Settings {
                         <td>
                             <input type="hidden" name="eab_fakturoid_enabled" value="0">
                             <label><input type="checkbox" name="eab_fakturoid_enabled" value="1" <?php checked(get_option('eab_fakturoid_enabled', 0)); ?>>
-                                <?php esc_html_e('Vystavit fakturu po zaplacení', 'events-and-bookings'); ?></label>
+                                <?php esc_html_e('Vytvořit proformu při rezervaci a potvrdit platbu webhookem', 'events-and-bookings'); ?></label>
+                            <p class="description"><?php esc_html_e('Po spárování platby ve Fakturoidu web dostane invoice_paid a potvrdí rezervaci. Nevytváří se druhá faktura.', 'events-and-bookings'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -250,6 +241,20 @@ class EAB_Admin_Settings {
                     <tr>
                         <th><label for="eab_fakturoid_vat_rate"><?php esc_html_e('Sazba DPH (%)', 'events-and-bookings'); ?></label></th>
                         <td><input type="number" min="0" max="100" class="small-text" id="eab_fakturoid_vat_rate" name="eab_fakturoid_vat_rate" value="<?php echo esc_attr(get_option('eab_fakturoid_vat_rate', 21)); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Webhook URL', 'events-and-bookings'); ?></th>
+                        <td>
+                            <code><?php echo esc_html(EAB_Fakturoid::get_webhook_url()); ?></code>
+                            <p class="description"><?php esc_html_e('Zadejte tuto URL ve Fakturoidu u webhooku pro událost invoice_paid (odděleně pro produkci a staging).', 'events-and-bookings'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="eab_fakturoid_webhook_auth"><?php esc_html_e('Webhook Authorization', 'events-and-bookings'); ?></label></th>
+                        <td>
+                            <input type="text" class="regular-text" id="eab_fakturoid_webhook_auth" name="eab_fakturoid_webhook_auth" value="<?php echo esc_attr(get_option('eab_fakturoid_webhook_auth', '')); ?>" autocomplete="off" placeholder="Bearer …">
+                            <p class="description"><?php esc_html_e('Stejná hodnota jako auth_header ve Fakturoidu (např. Bearer tajny-token). Bez ní webhook odmítáme. Pokud Authorization na serveru chybí, přidejte do .htaccess předání HTTP_AUTHORIZATION.', 'events-and-bookings'); ?></p>
+                        </td>
                     </tr>
                 </table>
 

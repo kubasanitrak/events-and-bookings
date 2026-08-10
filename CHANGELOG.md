@@ -2,6 +2,20 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.8.0] - 2026-08-10
+
+### Added
+
+- Fakturoid **proforma** created at bank-transfer checkout (VS from Fakturoid).
+- Fakturoid webhook `invoice_paid` endpoint (`/?eab_fakturoid_webhook=1`) with Authorization check.
+- Payment page: copy payment details button, hold messaging, larger QR layout.
+
+### Changed
+
+- Paid orders sync/refresh the existing Fakturoid document (no second invoice).
+- GoPay card checkout is temporarily disabled/hidden (code retained).
+- Admin Fakturoid settings: webhook URL + auth header.
+
 ## [0.7.24] - 2026-07-25
 
 ### Changed

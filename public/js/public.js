@@ -350,7 +350,53 @@
         initFilterPills();
         initDashboard();
         initQuantitySpinners();
+        initCopyPaymentDetails();
     });
+
+    function initCopyPaymentDetails() {
+        $(document).on('click', '.eab-copy-payment', function () {
+            var $btn = $(this);
+            var text = $btn.attr('data-copy') || '';
+            var copied = $btn.attr('data-copied') || 'Zkopírováno';
+            var original = $btn.text();
+
+            if (!text) {
+                return;
+            }
+
+            function done() {
+                $btn.text(copied);
+                window.setTimeout(function () {
+                    $btn.text(original);
+                }, 2000);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(function () {
+                    fallbackCopy(text, done);
+                });
+                return;
+            }
+
+            fallbackCopy(text, done);
+        });
+    }
+
+    function fallbackCopy(text, done) {
+        var $ta = $('<textarea readonly></textarea>').val(text).css({
+            position: 'fixed',
+            left: '-9999px',
+            top: '0'
+        }).appendTo(document.body);
+        $ta[0].select();
+        try {
+            document.execCommand('copy');
+            done();
+        } catch (e) {
+            window.alert(text);
+        }
+        $ta.remove();
+    }
 
     function initDashboard() {
         var $root = $('[data-eab-dashboard]');

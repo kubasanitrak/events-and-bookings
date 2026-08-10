@@ -40,12 +40,31 @@ class EAB_DB {
         if (!in_array('fakturoid_invoice_number', $columns, true)) {
             $add[] = 'ADD COLUMN fakturoid_invoice_number varchar(32) DEFAULT NULL';
         }
+        if (!in_array('fakturoid_variable_symbol', $columns, true)) {
+            $add[] = 'ADD COLUMN fakturoid_variable_symbol varchar(32) DEFAULT NULL';
+        }
         if (!in_array('fakturoid_pdf', $columns, true)) {
             $add[] = 'ADD COLUMN fakturoid_pdf varchar(255) DEFAULT NULL';
         }
 
         foreach ($add as $sql) {
             $wpdb->query("ALTER TABLE $table $sql");
+        }
+
+        $indexes = $wpdb->get_results("SHOW INDEX FROM $table", ARRAY_A);
+        $index_names = array();
+        if (is_array($indexes)) {
+            foreach ($indexes as $row) {
+                if (!empty($row['Key_name'])) {
+                    $index_names[$row['Key_name']] = true;
+                }
+            }
+        }
+        if (empty($index_names['fakturoid_invoice_id'])) {
+            $wpdb->query("ALTER TABLE $table ADD KEY fakturoid_invoice_id (fakturoid_invoice_id)");
+        }
+        if (empty($index_names['fakturoid_variable_symbol'])) {
+            $wpdb->query("ALTER TABLE $table ADD KEY fakturoid_variable_symbol (fakturoid_variable_symbol)");
         }
     }
 
@@ -87,11 +106,14 @@ class EAB_DB {
             paid_at datetime DEFAULT NULL,
             fakturoid_invoice_id varchar(64) DEFAULT NULL,
             fakturoid_invoice_number varchar(32) DEFAULT NULL,
+            fakturoid_variable_symbol varchar(32) DEFAULT NULL,
             fakturoid_pdf varchar(255) DEFAULT NULL,
             PRIMARY KEY (id),
             KEY user_id (user_id),
             KEY order_number (order_number),
-            KEY status (status)
+            KEY status (status),
+            KEY fakturoid_invoice_id (fakturoid_invoice_id),
+            KEY fakturoid_variable_symbol (fakturoid_variable_symbol)
         ) $charset;");
 
         $order_items = $wpdb->prefix . 'eab_order_items';

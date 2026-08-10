@@ -66,6 +66,7 @@ class EAB_Loader {
         new EAB_Auth();
         new EAB_Checkout();
         new EAB_GoPay();
+        new EAB_Fakturoid();
         new EAB_Payment_Pages();
         new EAB_Dashboard();
         new EAB_Cron();
