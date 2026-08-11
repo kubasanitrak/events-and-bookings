@@ -13,6 +13,7 @@ class EAB_Admin_Settings {
         add_action('admin_menu', array($this, 'register_menu'), 12);
         add_action('admin_init', array($this, 'register_settings'));
         add_action('wp_ajax_eab_gopay_test_connectivity', array($this, 'ajax_gopay_test_connectivity'));
+        add_action('wp_ajax_eab_fakturoid_test_connectivity', array($this, 'ajax_fakturoid_test_connectivity'));
     }
 
     public function register_settings() {
@@ -29,8 +30,8 @@ class EAB_Admin_Settings {
             'eab_gopay_client_secret',
             'eab_fakturoid_enabled',
             'eab_fakturoid_slug',
-            'eab_fakturoid_email',
-            'eab_fakturoid_api_token',
+            'eab_fakturoid_client_id',
+            'eab_fakturoid_client_secret',
             'eab_fakturoid_user_agent',
             'eab_fakturoid_vat_rate',
             'eab_fakturoid_webhook_auth',
@@ -224,23 +225,42 @@ class EAB_Admin_Settings {
                     </tr>
                     <tr>
                         <th><label for="eab_fakturoid_slug"><?php esc_html_e('Slug účtu', 'events-and-bookings'); ?></label></th>
-                        <td><input type="text" class="regular-text" id="eab_fakturoid_slug" name="eab_fakturoid_slug" value="<?php echo esc_attr(get_option('eab_fakturoid_slug', '')); ?>"></td>
+                        <td>
+                            <input type="text" class="regular-text" id="eab_fakturoid_slug" name="eab_fakturoid_slug" value="<?php echo esc_attr(get_option('eab_fakturoid_slug', '')); ?>" placeholder="vas-slug">
+                            <p class="description"><?php esc_html_e('Z URL Fakturoidu: app.fakturoid.cz/{slug}/…', 'events-and-bookings'); ?></p>
+                        </td>
                     </tr>
                     <tr>
-                        <th><label for="eab_fakturoid_email">E-mail</label></th>
-                        <td><input type="email" class="regular-text" id="eab_fakturoid_email" name="eab_fakturoid_email" value="<?php echo esc_attr(get_option('eab_fakturoid_email', '')); ?>"></td>
+                        <th><label for="eab_fakturoid_client_id">Client ID</label></th>
+                        <td>
+                            <input type="text" class="regular-text" id="eab_fakturoid_client_id" name="eab_fakturoid_client_id" value="<?php echo esc_attr(get_option('eab_fakturoid_client_id', '')); ?>" autocomplete="off">
+                            <p class="description"><?php esc_html_e('Nastavení → Uživatelský účet → API přístupy (OAuth Client Credentials).', 'events-and-bookings'); ?></p>
+                        </td>
                     </tr>
                     <tr>
-                        <th><label for="eab_fakturoid_api_token">API token</label></th>
-                        <td><input type="password" class="regular-text" id="eab_fakturoid_api_token" name="eab_fakturoid_api_token" value="<?php echo esc_attr(get_option('eab_fakturoid_api_token', '')); ?>" autocomplete="new-password"></td>
+                        <th><label for="eab_fakturoid_client_secret">Client Secret</label></th>
+                        <td><input type="password" class="regular-text" id="eab_fakturoid_client_secret" name="eab_fakturoid_client_secret" value="<?php echo esc_attr(get_option('eab_fakturoid_client_secret', '')); ?>" autocomplete="new-password"></td>
                     </tr>
                     <tr>
                         <th><label for="eab_fakturoid_user_agent">User-Agent</label></th>
-                        <td><input type="text" class="regular-text" id="eab_fakturoid_user_agent" name="eab_fakturoid_user_agent" value="<?php echo esc_attr(get_option('eab_fakturoid_user_agent', 'Events and Bookings (kubasanitrak)')); ?>"></td>
+                        <td>
+                            <input type="text" class="regular-text" id="eab_fakturoid_user_agent" name="eab_fakturoid_user_agent" value="<?php echo esc_attr(get_option('eab_fakturoid_user_agent', 'Events and Bookings (kubasanitrak)')); ?>">
+                            <p class="description"><?php esc_html_e('Formát: NázevAplikace (vas@email.cz)', 'events-and-bookings'); ?></p>
+                        </td>
                     </tr>
                     <tr>
                         <th><label for="eab_fakturoid_vat_rate"><?php esc_html_e('Sazba DPH (%)', 'events-and-bookings'); ?></label></th>
                         <td><input type="number" min="0" max="100" class="small-text" id="eab_fakturoid_vat_rate" name="eab_fakturoid_vat_rate" value="<?php echo esc_attr(get_option('eab_fakturoid_vat_rate', 21)); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Test API', 'events-and-bookings'); ?></th>
+                        <td>
+                            <button type="button" class="button" id="eab-fakturoid-test-connectivity">
+                                <?php esc_html_e('Otestovat připojení', 'events-and-bookings'); ?>
+                            </button>
+                            <span class="description"><?php esc_html_e('OAuth + načtení účtu (uložte nastavení před testem).', 'events-and-bookings'); ?></span>
+                            <div id="eab-fakturoid-test-output" class="eab-fakturoid-test-output" aria-live="polite"></div>
+                        </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Webhook URL', 'events-and-bookings'); ?></th>
@@ -294,6 +314,16 @@ class EAB_Admin_Settings {
         wp_send_json_success(EAB_GoPay::run_connectivity_test());
     }
 
+    public function ajax_fakturoid_test_connectivity() {
+        check_ajax_referer('eab_fakturoid_test', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Nedostatečná oprávnění.', 'events-and-bookings')));
+        }
+
+        wp_send_json_success(EAB_Fakturoid::run_connectivity_test());
+    }
+
     public static function enqueue_gopay_test_script($hook) {
         if ($hook !== 'eab-main-menu_page_eab-settings') {
             return;
@@ -331,6 +361,23 @@ class EAB_Admin_Settings {
                 'checkoutReady'    => __('připraveno', 'events-and-bookings'),
                 'checkoutNotReady' => __('chybí nastavení', 'events-and-bookings'),
                 'docs'             => __('Kompletní postup testování je v docs/gopay-sandbox-testing.md v repozitáři pluginu.', 'events-and-bookings'),
+            ),
+        ));
+
+        wp_enqueue_script(
+            'eab-settings-fakturoid-test',
+            EAB_PLUGIN_URL . 'admin/js/settings-fakturoid-test.js',
+            array('jquery'),
+            EAB_VERSION,
+            true
+        );
+
+        wp_localize_script('eab-settings-fakturoid-test', 'eabFakturoidTest', array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('eab_fakturoid_test'),
+            'i18n'    => array(
+                'running' => __('Testuji připojení…', 'events-and-bookings'),
+                'error'   => __('Test selhal.', 'events-and-bookings'),
             ),
         ));
     }

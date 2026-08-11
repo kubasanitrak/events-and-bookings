@@ -2,6 +2,13 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.8.1] - 2026-08-11
+
+### Changed
+
+- Fakturoid API auth: OAuth 2 **Client ID + Client Secret** (replaces legacy e-mail / API token).
+- Admin: Fakturoid connectivity test button.
+
 ## [0.8.0] - 2026-08-10
 
 ### Added

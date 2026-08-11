@@ -7,9 +7,12 @@ Flow: checkout (bank transfer) → Fakturoid creates **proforma** → customer p
 **Akce a rezervace → Nastavení → Fakturoid**
 
 1. Enable *Vytvořit proformu při rezervaci…*
-2. Fill slug, API e-mail, API token, User-Agent, VAT rate
-3. Copy **Webhook URL** into Fakturoid
-4. Set **Webhook Authorization** to the same value as Fakturoid `auth_header` (e.g. `Bearer your-secret`)
+2. **Slug účtu** — from the Fakturoid URL: `https://app.fakturoid.cz/{slug}/…`
+3. **Client ID** + **Client Secret** — *Nastavení → Uživatelský účet → API přístupy* (OAuth Client Credentials; prefer the access that has webhook API management if you manage webhooks via API)
+4. **User-Agent** — e.g. `Events and Bookings (vas@email.cz)`
+5. Copy **Webhook URL** into Fakturoid
+6. Set **Webhook Authorization** to the same value as Fakturoid `auth_header` (e.g. `Bearer your-secret`)
+7. Use **Otestovat připojení** after saving
 
 Without Authorization configured, the endpoint returns `503` and ignores payloads.
 

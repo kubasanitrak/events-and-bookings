@@ -68,3 +68,17 @@
   color: #8a2424;
   font-weight: 600;
 }
+
+.eab-fakturoid-test-output {
+  margin-top: 0.75em;
+}
+
+.eab-fakturoid-test__ok {
+  color: #1e6b2e;
+  font-weight: 600;
+}
+
+.eab-fakturoid-test__fail {
+  color: #8a2424;
+  font-weight: 600;
+}

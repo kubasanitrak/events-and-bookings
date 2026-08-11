@@ -19,13 +19,25 @@ class EAB_Fakturoid {
     public static function is_enabled() {
         return (bool) get_option('eab_fakturoid_enabled', 0)
             && get_option('eab_fakturoid_slug', '')
-            && get_option('eab_fakturoid_email', '')
-            && get_option('eab_fakturoid_api_token', '');
+            && get_option('eab_fakturoid_client_id', '')
+            && get_option('eab_fakturoid_client_secret', '');
     }
 
     public static function api_base() {
-        $slug = sanitize_title(get_option('eab_fakturoid_slug', ''));
+        $slug = self::get_account_slug();
         return 'https://app.fakturoid.cz/api/v3/accounts/' . $slug;
+    }
+
+    public static function get_account_slug() {
+        $slug = (string) get_option('eab_fakturoid_slug', '');
+        // Account slug from URL: app.fakturoid.cz/{slug}/…
+        $slug = trim($slug, "/ \t\n\r\0\x0B");
+        return preg_replace('/[^a-zA-Z0-9\-_]/', '', $slug);
+    }
+
+    public static function get_user_agent() {
+        $ua = (string) get_option('eab_fakturoid_user_agent', 'Events and Bookings (kubasanitrak)');
+        return $ua !== '' ? $ua : 'Events and Bookings (kubasanitrak)';
     }
 
     public static function get_webhook_url() {
@@ -469,19 +481,112 @@ class EAB_Fakturoid {
     }
 
     /**
+     * OAuth2 Client Credentials — cached access token.
+     *
+     * @return string|WP_Error
+     */
+    private static function get_access_token() {
+        $client_id     = (string) get_option('eab_fakturoid_client_id', '');
+        $client_secret = (string) get_option('eab_fakturoid_client_secret', '');
+
+        if ($client_id === '' || $client_secret === '') {
+            return new WP_Error('fakturoid_auth', __('Fakturoid Client ID / Secret chybí.', 'events-and-bookings'));
+        }
+
+        $cache_key = 'eab_fakturoid_token_' . md5($client_id);
+        $cached = get_transient($cache_key);
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
+
+        $response = wp_remote_post('https://app.fakturoid.cz/api/v3/oauth/token', array(
+            'timeout' => 30,
+            'headers' => array(
+                'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
+                'User-Agent'    => self::get_user_agent(),
+                'Accept'        => 'application/json',
+                'Content-Type'  => 'application/json',
+            ),
+            'body' => wp_json_encode(array(
+                'grant_type' => 'client_credentials',
+            )),
+        ));
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code < 200 || $code >= 300 || empty($body['access_token'])) {
+            $message = isset($body['error_description'])
+                ? (string) $body['error_description']
+                : (isset($body['error']) ? (string) $body['error'] : __('Fakturoid OAuth selhalo.', 'events-and-bookings'));
+            return new WP_Error('fakturoid_auth', $message, array('code' => $code));
+        }
+
+        $ttl = max(60, (int) ($body['expires_in'] ?? 7200) - 120);
+        set_transient($cache_key, $body['access_token'], $ttl);
+
+        return $body['access_token'];
+    }
+
+    /**
+     * Quick connectivity check (OAuth + account read).
+     *
+     * @return array{ok:bool,message:string}
+     */
+    public static function run_connectivity_test() {
+        if (!self::is_enabled()) {
+            return array(
+                'ok'      => false,
+                'message' => __('Doplňte slug, Client ID a Client Secret a zapněte Fakturoid.', 'events-and-bookings'),
+            );
+        }
+
+        $token = self::get_access_token();
+        if (is_wp_error($token)) {
+            return array(
+                'ok'      => false,
+                'message' => $token->get_error_message(),
+            );
+        }
+
+        $account = self::api_request('GET', '/account.json');
+        if (is_wp_error($account)) {
+            return array(
+                'ok'      => false,
+                'message' => $account->get_error_message(),
+            );
+        }
+
+        $name = isset($account['name']) ? (string) $account['name'] : self::get_account_slug();
+        return array(
+            'ok'      => true,
+            'message' => sprintf(
+                /* translators: %s: Fakturoid account name */
+                __('Připojení OK — účet „%s“.', 'events-and-bookings'),
+                $name
+            ),
+        );
+    }
+
+    /**
      * @return array|WP_Error
      */
     private static function api_request($method, $path, $body = null, $raw = false) {
-        $email = get_option('eab_fakturoid_email', '');
-        $token = get_option('eab_fakturoid_api_token', '');
-        $ua    = get_option('eab_fakturoid_user_agent', 'Events and Bookings (kubasanitrak)');
+        $token = self::get_access_token();
+        if (is_wp_error($token)) {
+            return $token;
+        }
 
         $args = array(
             'method'  => $method,
             'timeout' => 45,
             'headers' => array(
-                'Authorization' => 'Basic ' . base64_encode($email . ':' . $token),
-                'User-Agent'    => $ua,
+                'Authorization' => 'Bearer ' . $token,
+                'User-Agent'    => self::get_user_agent(),
                 'Accept'        => $raw ? 'application/pdf' : 'application/json',
                 'Content-Type'  => 'application/json',
             ),
@@ -499,6 +604,16 @@ class EAB_Fakturoid {
 
         $code = wp_remote_retrieve_response_code($response);
         $resp_body = wp_remote_retrieve_body($response);
+
+        // Stale token — clear cache and retry once.
+        if ($code === 401 && empty($GLOBALS['eab_fakturoid_token_retry'])) {
+            $client_id = (string) get_option('eab_fakturoid_client_id', '');
+            delete_transient('eab_fakturoid_token_' . md5($client_id));
+            $GLOBALS['eab_fakturoid_token_retry'] = true;
+            $result = self::api_request($method, $path, $body, $raw);
+            unset($GLOBALS['eab_fakturoid_token_retry']);
+            return $result;
+        }
 
         if ($raw) {
             if ($code >= 200 && $code < 300) {
