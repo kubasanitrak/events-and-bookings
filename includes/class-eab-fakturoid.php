@@ -486,8 +486,8 @@ class EAB_Fakturoid {
      * @return string|WP_Error
      */
     private static function get_access_token() {
-        $client_id     = (string) get_option('eab_fakturoid_client_id', '');
-        $client_secret = (string) get_option('eab_fakturoid_client_secret', '');
+        $client_id     = trim((string) get_option('eab_fakturoid_client_id', ''));
+        $client_secret = trim((string) get_option('eab_fakturoid_client_secret', ''));
 
         if ($client_id === '' || $client_secret === '') {
             return new WP_Error('fakturoid_auth', __('Fakturoid Client ID / Secret chybí.', 'events-and-bookings'));
@@ -499,17 +499,18 @@ class EAB_Fakturoid {
             return $cached;
         }
 
+        // Prefer form body (OAuth RFC); Fakturoid also accepts JSON.
         $response = wp_remote_post('https://app.fakturoid.cz/api/v3/oauth/token', array(
             'timeout' => 30,
             'headers' => array(
                 'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
                 'User-Agent'    => self::get_user_agent(),
                 'Accept'        => 'application/json',
-                'Content-Type'  => 'application/json',
+                'Content-Type'  => 'application/x-www-form-urlencoded',
             ),
-            'body' => wp_json_encode(array(
+            'body' => array(
                 'grant_type' => 'client_credentials',
-            )),
+            ),
         ));
 
         if (is_wp_error($response)) {
@@ -517,12 +518,25 @@ class EAB_Fakturoid {
         }
 
         $code = wp_remote_retrieve_response_code($response);
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $raw  = wp_remote_retrieve_body($response);
+        $body = json_decode($raw, true);
 
         if ($code < 200 || $code >= 300 || empty($body['access_token'])) {
+            $error = is_array($body) && isset($body['error']) ? (string) $body['error'] : '';
             $message = isset($body['error_description'])
                 ? (string) $body['error_description']
-                : (isset($body['error']) ? (string) $body['error'] : __('Fakturoid OAuth selhalo.', 'events-and-bookings'));
+                : ($error !== '' ? $error : __('Fakturoid OAuth selhalo.', 'events-and-bookings'));
+
+            if ($error === 'invalid_client') {
+                $message = __('invalid_client — Client ID nebo Client Secret nesedí. Zkontrolujte zkopírované údaje (celý řetězec, bez mezer), uložte nastavení a zkuste znovu. Použijte údaje z Nastavení → Uživatelský účet → API přístupy.', 'events-and-bookings');
+            }
+
+            EAB_Payments::log('fakturoid_oauth_failed', $message, array(
+                'http'  => $code,
+                'error' => $error,
+                'body'  => is_array($body) ? $body : substr((string) $raw, 0, 300),
+            ));
+
             return new WP_Error('fakturoid_auth', $message, array('code' => $code));
         }
 

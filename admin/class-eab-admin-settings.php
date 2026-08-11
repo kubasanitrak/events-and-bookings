@@ -30,8 +30,6 @@ class EAB_Admin_Settings {
             'eab_gopay_client_secret',
             'eab_fakturoid_enabled',
             'eab_fakturoid_slug',
-            'eab_fakturoid_client_id',
-            'eab_fakturoid_client_secret',
             'eab_fakturoid_user_agent',
             'eab_fakturoid_vat_rate',
             'eab_fakturoid_webhook_auth',
@@ -53,6 +51,22 @@ class EAB_Admin_Settings {
         foreach ($options as $opt) {
             register_setting('eab_settings', $opt);
         }
+
+        register_setting('eab_settings', 'eab_fakturoid_client_id', array(
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+        ));
+        register_setting('eab_settings', 'eab_fakturoid_client_secret', array(
+            'type'              => 'string',
+            'sanitize_callback' => array($this, 'sanitize_fakturoid_secret'),
+        ));
+    }
+
+    /**
+     * Keep secrets intact; only trim whitespace from copy/paste.
+     */
+    public function sanitize_fakturoid_secret($value) {
+        return is_string($value) ? trim($value) : '';
     }
 
     public function register_menu() {
