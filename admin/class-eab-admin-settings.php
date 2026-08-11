@@ -325,7 +325,8 @@ class EAB_Admin_Settings {
     }
 
     public static function enqueue_gopay_test_script($hook) {
-        if ($hook !== 'eab-main-menu_page_eab-settings') {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($page !== 'eab-settings') {
             return;
         }
 
@@ -376,8 +377,9 @@ class EAB_Admin_Settings {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('eab_fakturoid_test'),
             'i18n'    => array(
-                'running' => __('Testuji připojení…', 'events-and-bookings'),
-                'error'   => __('Test selhal.', 'events-and-bookings'),
+                'running'       => __('Testuji připojení…', 'events-and-bookings'),
+                'error'         => __('Test selhal.', 'events-and-bookings'),
+                'scriptMissing' => __('Testovací skript se nenačetl. Obnovte stránku (Ctrl/Cmd+Shift+R).', 'events-and-bookings'),
             ),
         ));
     }

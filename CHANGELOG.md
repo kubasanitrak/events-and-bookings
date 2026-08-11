@@ -2,6 +2,12 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.8.2] - 2026-08-11
+
+### Fixed
+
+- Fakturoid / GoPay settings test scripts now load on the settings page reliably (page slug check instead of fragile admin hook).
+
 ## [0.8.1] - 2026-08-11
 
 ### Changed
