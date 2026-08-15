@@ -106,21 +106,69 @@ class EAB_Pricing {
     }
 
     private static function services_addon_total($post_id, array $selected_slugs, $spots) {
-        if (!function_exists('get_field') || empty($selected_slugs)) {
+        if (empty($selected_slugs)) {
             return 0.0;
         }
-        $rows = get_field('optional_services', $post_id);
-        if (!is_array($rows)) {
+        $rows = self::get_optional_services($post_id);
+        if (empty($rows)) {
+            return 0.0;
+        }
+        $selected_keys = array();
+        foreach ($selected_slugs as $value) {
+            $key = self::service_key_from_value($value);
+            if ($key !== '') {
+                $selected_keys[$key] = true;
+            }
+        }
+        if (empty($selected_keys)) {
             return 0.0;
         }
         $total = 0.0;
         foreach ($rows as $row) {
-            $slug = isset($row['slug']) ? $row['slug'] : '';
-            if ($slug && in_array($slug, $selected_slugs, true)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $key = self::service_key($row);
+            if ($key !== '' && isset($selected_keys[$key])) {
                 $total += (float) ($row['price_addon'] ?? 0) * $spots;
             }
         }
         return $total;
+    }
+
+    /**
+     * Stable key for an optional-service row (slug, or label if slug is empty).
+     */
+    public static function service_key(array $row) {
+        $slug  = trim((string) ($row['slug'] ?? ''));
+        $label = trim((string) ($row['label'] ?? ''));
+        return self::service_key_from_value($slug !== '' ? $slug : $label);
+    }
+
+    /**
+     * Normalize a service identifier so NBSP / spaces / accents still match.
+     * Theme typography often turns " v " into " v&nbsp;", which broke the first extra.
+     */
+    public static function service_key_from_value($value) {
+        $value = (string) $value;
+        $value = preg_replace('/[\x{00A0}\x{202F}\x{2007}\x{2060}]/u', ' ', $value);
+        $value = trim(preg_replace('/\s+/u', ' ', $value));
+        if ($value === '') {
+            return '';
+        }
+        $key = sanitize_title($value);
+        return $key !== '' ? $key : $value;
+    }
+
+    public static function selected_service_keys(array $selected_slugs) {
+        $keys = array();
+        foreach ($selected_slugs as $value) {
+            $key = self::service_key_from_value($value);
+            if ($key !== '') {
+                $keys[] = $key;
+            }
+        }
+        return $keys;
     }
 
     public static function get_optional_services($post_id) {

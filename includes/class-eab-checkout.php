@@ -93,7 +93,11 @@ class EAB_Checkout {
             );
         }
 
-        $total = $basket->get_total();
+        $total = 0.0;
+        foreach ($line_totals as $line_total) {
+            $total += (float) $line_total['line_total'];
+        }
+        $total = !empty($line_totals) ? round($total, 2) : $basket->get_total();
 
         wp_send_json_success(array(
             'total'           => $total,

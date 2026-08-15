@@ -449,13 +449,22 @@ class EAB_Event {
         $rows   = EAB_Pricing::get_optional_services($post_id);
         $labels = array();
 
+        $selected_keys = array_fill_keys(EAB_Pricing::selected_service_keys($selected_slugs), true);
+
         foreach ($rows as $row) {
-            $slug = isset($row['slug']) ? $row['slug'] : '';
-            if ($slug && in_array($slug, $selected_slugs, true)) {
-                $label = isset($row['label']) ? $row['label'] : $slug;
-                if ($label !== '') {
-                    $labels[] = $label;
-                }
+            if (!is_array($row)) {
+                continue;
+            }
+            $key = EAB_Pricing::service_key($row);
+            if ($key === '' || !isset($selected_keys[$key])) {
+                continue;
+            }
+            $label = trim((string) ($row['label'] ?? ''));
+            if ($label === '') {
+                $label = trim((string) ($row['slug'] ?? $key));
+            }
+            if ($label !== '') {
+                $labels[] = $label;
             }
         }
 

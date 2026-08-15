@@ -100,10 +100,16 @@
         });
     });
 
-    // Invoice toggle
-    $(document).on('change', '#eab_want_invoice', function () {
-        $('.eab-invoice-fields').prop('hidden', !$(this).is(':checked'));
-    });
+    // Invoice toggle: details + "save to profile" only when the user wants an invoice
+    function syncInvoiceFields() {
+        var wantsInvoice = $('#eab_want_invoice').is(':checked');
+        $('.eab-invoice-fields').prop('hidden', !wantsInvoice);
+        if (!wantsInvoice) {
+            $('#eab_save_invoice_to_profile').prop('checked', false);
+        }
+    }
+
+    $(document).on('change', '#eab_want_invoice', syncInvoiceFields);
 
     var attendeePlaceholders = {
         first_name: 'Anna',
@@ -186,8 +192,14 @@
         var postId = $line.data('post-id');
         var spots = parseInt($line.find('.eab-spots-input').val(), 10) || 1;
         var services = [];
-        $line.find('.eab-service-cb:checked').each(function () {
-            services.push($(this).val());
+        $line.find('.eab-service-cb').each(function () {
+            if (!this.checked) {
+                return;
+            }
+            var value = (this.value || '').replace(/[\u00A0\u202F\u2007\u2060]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (value) {
+                services.push(value);
+            }
         });
         var attendees = [];
         $line.find('.eab-attendee-block').each(function () {
@@ -288,6 +300,8 @@
             var spots = parseInt($line.find('.eab-spots-input').val(), 10) || 1;
             renderAttendees($att, spots);
         });
+
+        syncInvoiceFields();
 
         $(document).on('change', '.eab-spots-input', function () {
             var $line = $(this).closest('.eab-checkout-line');

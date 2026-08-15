@@ -64,15 +64,23 @@ if (!defined('ABSPATH')) {
                         <fieldset class="eab-checkout__section eab-checkout-services">
                             <legend class="eab-checkout__section-label caps"><?php esc_html_e('Volitelné služby', 'events-and-bookings'); ?></legend>
                             <div class="eab-checkout__rule" aria-hidden="true"></div>
-                            <?php foreach ($services_defs as $svc) :
-                                $slug = $svc['slug'] ?? '';
+                            <?php
+                            $selected_service_keys = array_fill_keys(
+                                EAB_Pricing::selected_service_keys($meta['services'] ?? array()),
+                                true
+                            );
+                            foreach ($services_defs as $svc) :
+                                if (!is_array($svc)) {
+                                    continue;
+                                }
+                                $slug = EAB_Pricing::service_key($svc);
                                 if ($slug === '') {
                                     continue;
                                 }
-                                $checked = in_array($slug, $meta['services'] ?? array(), true);
+                                $checked = isset($selected_service_keys[$slug]);
                                 ?>
                                 <label class="auth-checkbox">
-                                    <input type="checkbox" class="eab-service-cb" value="<?php echo esc_attr($slug); ?>" data-post-id="<?php echo esc_attr($post_id); ?>" <?php checked($checked); ?>>
+                                    <input type="checkbox" class="eab-service-cb" value="<?php echo esc_attr($slug); ?>" data-post-id="<?php echo esc_attr($post_id); ?>" data-price-addon="<?php echo esc_attr((float) ($svc['price_addon'] ?? 0)); ?>" <?php checked($checked); ?>>
                                     <span><?php echo esc_html($svc['label'] ?? $slug); ?></span>
                                     <?php if (!empty($svc['price_addon'])) : ?>
                                         <span class="eab-service-price">+<?php echo esc_html(EAB_Payments::format_price($svc['price_addon'])); ?></span>
@@ -125,13 +133,6 @@ if (!defined('ABSPATH')) {
         <?php endif; ?>
 
         <div class="eab-checkout__section eab-checkout__consents auth-form__checkboxes">
-            <?php if (EAB_Settings::checkout_invoice_enabled()) : ?>
-                <label class="auth-checkbox">
-                    <input type="checkbox" name="save_invoice_to_profile" id="eab_save_invoice_to_profile" value="1">
-                    <span><?php esc_html_e('Uložit údaje do mého profilu', 'events-and-bookings'); ?></span>
-                </label>
-            <?php endif; ?>
-
             <?php if ($terms_page) : ?>
                 <label class="auth-checkbox">
                     <input type="checkbox" name="agree_terms" value="1" required>

@@ -65,5 +65,10 @@ if (!EAB_Settings::checkout_invoice_enabled()) {
                        value="<?php echo esc_attr($saved_invoice['dic'] ?? ''); ?>">
             </div>
         </div>
+
+        <label class="auth-checkbox eab-save-invoice-choice">
+            <input type="checkbox" name="save_invoice_to_profile" id="eab_save_invoice_to_profile" value="1">
+            <span><?php esc_html_e('Uložit údaje do mého profilu', 'events-and-bookings'); ?></span>
+        </label>
     </div>
 </fieldset>
