@@ -302,6 +302,12 @@ class EAB_Checkout {
             return $capacity;
         }
 
+        $services = isset($meta['services']) && is_array($meta['services']) ? $meta['services'] : array();
+        $service_capacity = EAB_Capacity::can_reserve_services($post_id, $services, $spots);
+        if (is_wp_error($service_capacity)) {
+            return $service_capacity;
+        }
+
         if (!$require_attendees) {
             return true;
         }

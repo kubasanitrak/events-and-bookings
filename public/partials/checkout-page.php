@@ -69,6 +69,7 @@ if (!defined('ABSPATH')) {
                                 EAB_Pricing::selected_service_keys($meta['services'] ?? array()),
                                 true
                             );
+                            $service_availability = EAB_Capacity::get_service_availability($post_id, $spots);
                             foreach ($services_defs as $svc) :
                                 if (!is_array($svc)) {
                                     continue;
@@ -77,14 +78,20 @@ if (!defined('ABSPATH')) {
                                 if ($slug === '') {
                                     continue;
                                 }
-                                $checked = isset($selected_service_keys[$slug]);
+                                $avail    = $service_availability[$slug] ?? array();
+                                $limit    = (int) ($avail['limit'] ?? 0);
+                                $remaining = isset($avail['remaining']) ? (int) $avail['remaining'] : -1;
+                                $sold_out = !empty($avail['sold_out']);
+                                $checked  = isset($selected_service_keys[$slug]) && !$sold_out;
+                                $label_class = $sold_out ? 'auth-checkbox is-sold-out' : 'auth-checkbox';
                                 ?>
-                                <label class="auth-checkbox">
-                                    <input type="checkbox" class="eab-service-cb" value="<?php echo esc_attr($slug); ?>" data-post-id="<?php echo esc_attr($post_id); ?>" data-price-addon="<?php echo esc_attr((float) ($svc['price_addon'] ?? 0)); ?>" <?php checked($checked); ?>>
+                                <label class="<?php echo esc_attr($label_class); ?>">
+                                    <input type="checkbox" class="eab-service-cb" value="<?php echo esc_attr($slug); ?>" data-post-id="<?php echo esc_attr($post_id); ?>" data-price-addon="<?php echo esc_attr((float) ($svc['price_addon'] ?? 0)); ?>" data-capacity="<?php echo esc_attr($limit); ?>" data-remaining="<?php echo esc_attr($remaining); ?>" <?php checked($checked); ?> <?php disabled($sold_out); ?>>
                                     <span><?php echo esc_html($svc['label'] ?? $slug); ?></span>
                                     <?php if (!empty($svc['price_addon'])) : ?>
                                         <span class="eab-service-price">+<?php echo esc_html(EAB_Payments::format_price($svc['price_addon'])); ?></span>
                                     <?php endif; ?>
+                                    <span class="eab-service-sold-out"<?php echo $sold_out ? '' : ' hidden'; ?>><?php esc_html_e('Naplněná kapacita', 'events-and-bookings'); ?></span>
                                 </label>
                             <?php endforeach; ?>
                         </fieldset>

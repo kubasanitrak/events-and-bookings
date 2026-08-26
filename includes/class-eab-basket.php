@@ -133,6 +133,12 @@ class EAB_Basket {
             return $capacity;
         }
 
+        $services = isset($line_meta['services']) && is_array($line_meta['services']) ? $line_meta['services'] : array();
+        $service_capacity = EAB_Capacity::can_reserve_services($post_id, $services, $spots);
+        if (is_wp_error($service_capacity)) {
+            return $service_capacity;
+        }
+
         $line_meta['spots']     = $spots;
         $line_meta['spot_type'] = $capacity['spot_type'];
 

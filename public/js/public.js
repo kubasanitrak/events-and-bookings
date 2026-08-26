@@ -193,7 +193,7 @@
         var spots = parseInt($line.find('.eab-spots-input').val(), 10) || 1;
         var services = [];
         $line.find('.eab-service-cb').each(function () {
-            if (!this.checked) {
+            if (!this.checked || this.disabled) {
                 return;
             }
             var value = (this.value || '').replace(/[\u00A0\u202F\u2007\u2060]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -228,6 +228,28 @@
             lines.push(collectLineMeta($(this)));
         });
         return lines;
+    }
+
+    function syncServiceAvailability($line) {
+        var spots = parseInt($line.find('.eab-spots-input').val(), 10) || 1;
+        $line.find('.eab-service-cb').each(function () {
+            var $cb = $(this);
+            var $label = $cb.closest('label');
+            var $note = $label.find('.eab-service-sold-out');
+            var capacity = parseInt($cb.attr('data-capacity'), 10) || 0;
+            var remaining = parseInt($cb.attr('data-remaining'), 10);
+            var soldOut = capacity > 0 && remaining >= 0 && remaining < spots;
+
+            $cb.prop('disabled', soldOut);
+            if (soldOut) {
+                $cb.prop('checked', false);
+                $label.addClass('is-sold-out');
+                $note.removeAttr('hidden');
+            } else {
+                $label.removeClass('is-sold-out');
+                $note.attr('hidden', 'hidden');
+            }
+        });
     }
 
     var checkoutTotalsTimer = null;
@@ -299,6 +321,7 @@
             var $line = $att.closest('.eab-checkout-line');
             var spots = parseInt($line.find('.eab-spots-input').val(), 10) || 1;
             renderAttendees($att, spots);
+            syncServiceAvailability($line);
         });
 
         syncInvoiceFields();
@@ -317,6 +340,7 @@
                 });
                 existing.push(row);
             });
+            syncServiceAvailability($line);
             renderAttendees($line.find('.eab-checkout-attendees'), spots, null, existing);
             scheduleCheckoutTotalsUpdate();
         });

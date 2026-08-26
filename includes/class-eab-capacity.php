@@ -93,6 +93,128 @@ class EAB_Capacity {
     }
 
     /**
+     * Count spots already reserved for each optional service (held + paid orders).
+     *
+     * @return array<string,int> service_key => spots
+     */
+    public static function count_services($post_id) {
+        global $wpdb;
+
+        if (!EAB_DB::table_exists('eab_order_items') || !EAB_DB::table_exists('eab_orders')) {
+            return array();
+        }
+
+        $items_table  = $wpdb->prefix . 'eab_order_items';
+        $orders_table = $wpdb->prefix . 'eab_orders';
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT oi.qty, oi.line_meta
+             FROM $items_table oi
+             INNER JOIN $orders_table o ON oi.order_id = o.id
+             WHERE oi.object_id = %d
+             AND o.status NOT IN ('cancelled', 'expired', 'failed')
+             AND (o.status = 'paid' OR o.expires_at IS NULL OR o.expires_at > %s)",
+            $post_id,
+            current_time('mysql')
+        ));
+
+        $counts = array();
+        foreach ($rows as $row) {
+            $meta = json_decode($row->line_meta, true);
+            if (!is_array($meta) || empty($meta['services']) || !is_array($meta['services'])) {
+                continue;
+            }
+            $spots = !empty($meta['spots']) ? (int) $meta['spots'] : (int) $row->qty;
+            $spots = max(1, $spots);
+            foreach (EAB_Pricing::selected_service_keys($meta['services']) as $key) {
+                if (!isset($counts[$key])) {
+                    $counts[$key] = 0;
+                }
+                $counts[$key] += $spots;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Availability of optional services for a given party size.
+     *
+     * @return array<string,array{limit:int,used:int,remaining:int,sold_out:bool}>
+     */
+    public static function get_service_availability($post_id, $spots_needed = 1) {
+        $spots_needed = max(1, (int) $spots_needed);
+        $used         = self::count_services($post_id);
+        $defs         = EAB_Pricing::get_optional_services($post_id);
+        $out          = array();
+
+        foreach ($defs as $svc) {
+            if (!is_array($svc)) {
+                continue;
+            }
+            $key = EAB_Pricing::service_key($svc);
+            if ($key === '') {
+                continue;
+            }
+            $limit      = isset($svc['capacity']) ? (int) $svc['capacity'] : 0;
+            $used_count = (int) ($used[$key] ?? 0);
+            $remaining  = $limit <= 0 ? -1 : max(0, $limit - $used_count);
+            $out[$key]  = array(
+                'limit'     => $limit,
+                'used'      => $used_count,
+                'remaining' => $remaining,
+                'sold_out'  => $limit > 0 && $remaining < $spots_needed,
+            );
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param string[] $selected_services
+     * @return true|WP_Error
+     */
+    public static function can_reserve_services($post_id, array $selected_services, $spots) {
+        $spots = (int) $spots;
+        if ($spots < 1 || empty($selected_services)) {
+            return true;
+        }
+
+        $availability = self::get_service_availability($post_id, $spots);
+        if (empty($availability)) {
+            return true;
+        }
+
+        $selected_keys = array_fill_keys(EAB_Pricing::selected_service_keys($selected_services), true);
+        $defs          = EAB_Pricing::get_optional_services($post_id);
+
+        foreach ($defs as $svc) {
+            if (!is_array($svc)) {
+                continue;
+            }
+            $key = EAB_Pricing::service_key($svc);
+            if ($key === '' || !isset($selected_keys[$key])) {
+                continue;
+            }
+            $avail = $availability[$key] ?? null;
+            if (!$avail || empty($avail['sold_out'])) {
+                continue;
+            }
+            $label = trim((string) ($svc['label'] ?? $key));
+            return new WP_Error(
+                'eab_service_full',
+                sprintf(
+                    /* translators: %s: optional service name */
+                    __('Služba „%s“ má naplněnou kapacitu.', 'events-and-bookings'),
+                    $label
+                )
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * @param int   $order_id
      * @param int   $order_item_id
      * @param array $line_meta From basket/checkout.

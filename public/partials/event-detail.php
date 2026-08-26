@@ -104,22 +104,32 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
 
 <!-- VOLITELNÉ SERVICES -->
         <?php if ($show_services && function_exists('get_field')) :
-            $services = get_field('optional_services', $post_id);
-            if (!empty($services) && is_array($services)) : ?>
+            $services = EAB_Pricing::get_optional_services($post_id);
+            if (!empty($services) && is_array($services)) :
+                $service_availability = EAB_Capacity::get_service_availability($post_id, 1);
+                ?>
                 
                     <h6 class="caps border-T"><?php esc_html_e('Volitelné služby', 'events-and-bookings'); ?></h6>
                     <ul class="eab-detail__services">
                         <?php foreach ($services as $row) :
+                            if (!is_array($row)) {
+                                continue;
+                            }
                             $label = isset($row['label']) ? $row['label'] : '';
                             if ($label === '') {
                                 continue;
                             }
                             $addon = isset($row['price_addon']) && $row['price_addon'] !== '' ? (float) $row['price_addon'] : 0;
+                            $key = EAB_Pricing::service_key($row);
+                            $sold_out = $key !== '' && !empty($service_availability[$key]['sold_out']);
                             ?>
-                            <li>
+                            <li<?php echo $sold_out ? ' class="is-sold-out"' : ''; ?>>
                                 <?php echo esc_html($label); ?>
                                 <?php if ($addon > 0) : ?>
                                     <span class="eab-detail__service-price">+<?php echo esc_html(number_format_i18n($addon, 0)); ?> <?php echo esc_html(get_option('eab_currency_symbol', 'Kč')); ?></span>
+                                <?php endif; ?>
+                                <?php if ($sold_out) : ?>
+                                    <span class="eab-service-sold-out"><?php esc_html_e('Naplněná kapacita', 'events-and-bookings'); ?></span>
                                 <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
