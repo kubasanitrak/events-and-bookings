@@ -424,6 +424,75 @@ class EAB_Event {
     }
 
     /**
+     * Turn a stored location value into a maps URL or GPS string.
+     *
+     * Accepts a legacy ACF google_map array, an http(s) URL, or lat,lng coordinates.
+     * When $as_url is true, GPS is converted to a Google Maps search link.
+     *
+     * @param mixed $value
+     * @param bool  $as_url
+     * @return string
+     */
+    public static function normalize_place_link($value, $as_url = true) {
+        if (is_array($value)) {
+            $lat = isset($value['lat']) ? trim((string) $value['lat']) : '';
+            $lng = isset($value['lng']) ? trim((string) $value['lng']) : '';
+            if ($lat === '' || $lng === '') {
+                return '';
+            }
+            $coords = $lat . ',' . $lng;
+            return $as_url ? self::maps_search_url($coords) : $coords;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match('#^https?://#i', $value) || strpos($value, '//') === 0) {
+            return $value;
+        }
+
+        if (preg_match('/^(-?\d+(?:[.,]\d+)?)\s*[,;]\s*(-?\d+(?:[.,]\d+)?)$/', $value, $m)) {
+            $coords = str_replace(',', '.', $m[1]) . ',' . str_replace(',', '.', $m[2]);
+            return $as_url ? self::maps_search_url($coords) : $coords;
+        }
+
+        return $as_url ? '' : $value;
+    }
+
+    /**
+     * Maps URL for the event/training place (empty when unset).
+     *
+     * @param int $post_id
+     * @return string
+     */
+    public static function get_place_map_url($post_id) {
+        if (!function_exists('get_field')) {
+            return '';
+        }
+
+        $url = self::normalize_place_link(get_field('location', $post_id), true);
+        if ($url === '') {
+            return '';
+        }
+
+        if (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+
+        return esc_url_raw($url);
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     */
+    private static function maps_search_url($query) {
+        return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query);
+    }
+
+    /**
      * Uppercase location line for dashboard detail.
      */
     public static function get_detail_location_line($post_id) {

@@ -61,16 +61,16 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
 
         <?php if (function_exists('get_field')) :
             $place_text = get_field('place_text', $post_id);
-            $location   = get_field('location', $post_id);
-            if ($place_text || $location) : ?>
+            $place_url  = EAB_Event::get_place_map_url($post_id);
+            if ($place_text || $place_url) : ?>
                 
                     <h6 class="caps"><?php esc_html_e('Místo', 'events-and-bookings'); ?></h6>
                     <?php if ($place_text) : ?>
                         <div class="eab-detail__prose"><?php echo wp_kses_post(wpautop($place_text)); ?></div>
                     <?php endif; ?>
-                    <?php if (is_array($location) && !empty($location['lat']) && !empty($location['lng'])) : ?>
+                    <?php if ($place_url) : ?>
                         <p class="eab-detail__location">
-                            <a href="<?php echo esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location['lat'] . ',' . $location['lng'])); ?>" target="_blank" rel="noopener noreferrer">
+                            <a href="<?php echo esc_url($place_url); ?>" target="_blank" rel="noopener noreferrer">
                                 <?php esc_html_e('Zobrazit na mapě', 'events-and-bookings'); ?>
                             </a>
                         </p>
