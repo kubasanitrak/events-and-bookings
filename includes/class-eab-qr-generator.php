@@ -19,15 +19,20 @@ class EAB_QR_Generator {
             return null;
         }
 
-        $vs = substr(preg_replace('/\D/', '', $variable_symbol), 0, 10);
+        $vs      = substr(preg_replace('/\D/', '', $variable_symbol), 0, 10);
+        $account = $this->parse_account_number($account_number);
 
         $params = array(
-            'accountNumber' => $this->sanitize_account_number($account_number),
+            'accountNumber' => $account['base'],
             'bankCode'      => $this->sanitize_bank_code($bank_code),
             'amount'        => number_format((float) $amount, 2, '.', ''),
             'currency'      => strtoupper($currency),
             'size'          => (int) $size,
         );
+
+        if ($account['prefix'] !== '') {
+            $params['accountPrefix'] = $account['prefix'];
+        }
 
         if ($vs !== '') {
             $params['vs'] = $vs;
@@ -73,15 +78,30 @@ class EAB_QR_Generator {
         );
     }
 
-    private function sanitize_account_number($account_number) {
+    private function parse_account_number($account_number) {
         $account_number = preg_replace('/\s+/', '', $account_number);
+
+        if (strpos($account_number, '/') !== false) {
+            $account_number = explode('/', $account_number, 2)[0];
+        }
+
+        $prefix = '';
+        $base   = $account_number;
+
         if (strpos($account_number, '-') !== false) {
             list($prefix, $base) = explode('-', $account_number, 2);
             $prefix = ltrim($prefix, '0');
-            $base   = ltrim($base, '0');
-            return $prefix !== '' ? $prefix . '-' . $base : $base;
         }
-        return ltrim($account_number, '0');
+
+        $base = ltrim($base, '0');
+        if ($base === '') {
+            $base = '0';
+        }
+
+        return array(
+            'prefix' => $prefix,
+            'base'   => $base,
+        );
     }
 
     private function sanitize_bank_code($bank_code) {
