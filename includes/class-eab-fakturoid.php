@@ -40,6 +40,44 @@ class EAB_Fakturoid {
         return $ua !== '' ? $ua : 'Events and Bookings (kubasanitrak)';
     }
 
+    /**
+     * Line VAT rate for new documents. Non-VAT Fakturoid accounts require 0.
+     */
+    public static function get_document_vat_rate() {
+        $account = self::get_account_details();
+        if (is_array($account) && isset($account['vat_mode']) && $account['vat_mode'] === 'non_vat_payer') {
+            return 0;
+        }
+
+        return max(0, (int) get_option('eab_fakturoid_vat_rate', 0));
+    }
+
+    /**
+     * Cached account detail (vat_mode, default rates, …).
+     *
+     * @return array|WP_Error|null
+     */
+    public static function get_account_details() {
+        if (!self::is_enabled()) {
+            return null;
+        }
+
+        $slug = self::get_account_slug();
+        $cache_key = 'eab_fakturoid_account_' . md5($slug);
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $account = self::api_request('GET', '/account.json');
+        if (is_wp_error($account) || !is_array($account)) {
+            return $account;
+        }
+
+        set_transient($cache_key, $account, HOUR_IN_SECONDS);
+        return $account;
+    }
+
     public static function get_webhook_url() {
         return add_query_arg(self::WEBHOOK_QUERY, '1', home_url('/'));
     }
@@ -84,13 +122,15 @@ class EAB_Fakturoid {
             return $subject_id;
         }
 
+        $vat_rate = self::get_document_vat_rate();
+
         $lines = array();
         foreach ($order->items as $item) {
             $lines[] = array(
                 'name'       => $item->post_title,
                 'quantity'   => max(1, (int) $item->qty),
                 'unit_price' => (float) $item->unit_price,
-                'vat_rate'   => (int) get_option('eab_fakturoid_vat_rate', 21),
+                'vat_rate'   => $vat_rate,
             );
         }
 
@@ -100,12 +140,16 @@ class EAB_Fakturoid {
             'document_type'              => 'proforma',
             // Keep a single document; do not auto-issue a second final invoice.
             'proforma_followup_document' => 'none',
-            // Site prices are treated as amounts the customer pays (incl. VAT).
-            'vat_price_mode'             => 'from_total_with_vat',
             'custom_id'                  => $order->order_number,
             'order_number'               => $order->order_number,
             'note'                       => sprintf(__('Objednávka %s', 'events-and-bookings'), $order->order_number),
         );
+
+        // Only set VAT mode when the account uses VAT (non-zero rate).
+        if ($vat_rate > 0) {
+            // Site prices are treated as amounts the customer pays (incl. VAT).
+            $payload['vat_price_mode'] = 'from_total_with_vat';
+        }
 
         $created = self::api_request('POST', '/invoices.json', $payload);
         if (is_wp_error($created)) {
@@ -580,12 +624,21 @@ class EAB_Fakturoid {
         }
 
         $name = isset($account['name']) ? (string) $account['name'] : self::get_account_slug();
+        $vat_mode = isset($account['vat_mode']) ? (string) $account['vat_mode'] : '';
+        $vat_note = '';
+        if ($vat_mode === 'non_vat_payer') {
+            $vat_note = ' ' . __('(neplátce DPH → sazba 0)', 'events-and-bookings');
+        } elseif ($vat_mode !== '') {
+            $vat_note = ' (' . $vat_mode . ')';
+        }
+
         return array(
             'ok'      => true,
             'message' => sprintf(
-                /* translators: %s: Fakturoid account name */
-                __('Připojení OK — účet „%s“.', 'events-and-bookings'),
-                $name
+                /* translators: 1: Fakturoid account name, 2: optional VAT note */
+                __('Připojení OK — účet „%1$s“%2$s.', 'events-and-bookings'),
+                $name,
+                $vat_note
             ),
         );
     }

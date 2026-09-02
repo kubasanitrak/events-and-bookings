@@ -264,7 +264,10 @@ class EAB_Admin_Settings {
                     </tr>
                     <tr>
                         <th><label for="eab_fakturoid_vat_rate"><?php esc_html_e('Sazba DPH (%)', 'events-and-bookings'); ?></label></th>
-                        <td><input type="number" min="0" max="100" class="small-text" id="eab_fakturoid_vat_rate" name="eab_fakturoid_vat_rate" value="<?php echo esc_attr(get_option('eab_fakturoid_vat_rate', 21)); ?>"></td>
+                        <td>
+                            <input type="number" min="0" max="100" class="small-text" id="eab_fakturoid_vat_rate" name="eab_fakturoid_vat_rate" value="<?php echo esc_attr(get_option('eab_fakturoid_vat_rate', 0)); ?>">
+                            <p class="description"><?php esc_html_e('Neplátce DPH ve Fakturoidu musí mít 0 (API jinak vrátí „vat_rate musí být nula“). U plátců obvykle 21.', 'events-and-bookings'); ?></p>
+                        </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Test API', 'events-and-bookings'); ?></th>

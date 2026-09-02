@@ -57,7 +57,7 @@ class EAB_Activator {
             'eab_fakturoid_client_id'     => '',
             'eab_fakturoid_client_secret' => '',
             'eab_fakturoid_user_agent'    => 'Events and Bookings (kubasanitrak)',
-            'eab_fakturoid_vat_rate'      => 21,
+            'eab_fakturoid_vat_rate'      => 0,
             'eab_fakturoid_webhook_auth'  => '',
             'eab_order_expiry_hours'      => 24,
             'eab_bank_account_name'       => '',

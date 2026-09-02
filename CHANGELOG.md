@@ -8,6 +8,12 @@ All notable changes to Events and Bookings are documented here.
 
 - Version bump.
 
+## [0.8.10] - 2026-09-02
+
+### Fixed
+
+- Fakturoid proforma: non-VAT accounts (`vat_mode=non_vat_payer`) force `vat_rate=0` (API error „musí být nula“).
+
 ## [0.8.9] - 2026-09-02
 
 ### Fixed
