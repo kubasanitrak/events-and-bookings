@@ -2,6 +2,14 @@
 
 All notable changes to Events and Bookings are documented here.
 
+## [0.8.9] - 2026-09-02
+
+### Fixed
+
+- Surface missing Fakturoid proforma (payment page warning, admin column, last error notice).
+- Admin action **Vytvořit proformu** for awaiting orders without a Fakturoid document.
+- Proforma amounts use `vat_price_mode: from_total_with_vat` so totals match QR/paid amount.
+
 ## [0.8.8] - 2026-09-01
 
 ### Changed

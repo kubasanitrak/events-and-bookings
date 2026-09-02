@@ -4,3 +4,5 @@
 .eab-service-sold-out{text-transform:none;letter-spacing:0;color:var(--gray2);font-size:13px;font-weight:400;margin-left:.35em}
 .eab-detail__services .is-sold-out{opacity:.55}
 .eab-detail__services .eab-service-sold-out{margin-left:.35em}
+/* eab-bank-transfer-warning */
+.eab-bank-transfer__warning{margin:0 0 var(--gap);padding:calc(var(--gap)*.75) var(--gap);border:2px solid var(--kami-ochre,#c90);background:hsla(39,66%,50%,.12);line-height:1.4}

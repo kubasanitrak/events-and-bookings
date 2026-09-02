@@ -100,6 +100,8 @@ class EAB_Fakturoid {
             'document_type'              => 'proforma',
             // Keep a single document; do not auto-issue a second final invoice.
             'proforma_followup_document' => 'none',
+            // Site prices are treated as amounts the customer pays (incl. VAT).
+            'vat_price_mode'             => 'from_total_with_vat',
             'custom_id'                  => $order->order_number,
             'order_number'               => $order->order_number,
             'note'                       => sprintf(__('Objednávka %s', 'events-and-bookings'), $order->order_number),
@@ -134,6 +136,8 @@ class EAB_Fakturoid {
             'invoice_id'       => $invoice_id,
             'variable_symbol'  => $vs,
         ));
+
+        delete_option('eab_fakturoid_last_order_error');
 
         return array(
             'invoice_id'      => $invoice_id,

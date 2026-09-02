@@ -20,7 +20,16 @@ class EAB_Bank_Transfer {
                 EAB_Payments::log('fakturoid_proforma_skipped', $result->get_error_message(), array(
                     'order_id' => $order_id,
                 ));
+                update_option('eab_fakturoid_last_order_error', array(
+                    'order_id'   => (int) $order_id,
+                    'message'    => $result->get_error_message(),
+                    'created_at' => current_time('mysql'),
+                ), false);
             }
+        } else {
+            EAB_Payments::log('fakturoid_skipped', 'Fakturoid disabled or incomplete credentials', array(
+                'order_id' => $order_id,
+            ));
         }
 
         return true;

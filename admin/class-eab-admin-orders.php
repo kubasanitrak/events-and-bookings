@@ -66,6 +66,20 @@ class EAB_Admin_Orders {
                     $redirect = add_query_arg('eab_msg', 'order_cancelled', $redirect);
                 }
                 break;
+
+            case 'create_proforma':
+                if (in_array($order->status, self::actionable_statuses(), true)) {
+                    $result = EAB_Fakturoid::create_proforma_for_order($order_id);
+                    if (is_wp_error($result)) {
+                        $redirect = add_query_arg(array(
+                            'eab_msg'   => 'proforma_failed',
+                            'eab_error' => rawurlencode($result->get_error_message()),
+                        ), $redirect);
+                    } else {
+                        $redirect = add_query_arg('eab_msg', 'proforma_created', $redirect);
+                    }
+                }
+                break;
         }
 
         wp_safe_redirect($redirect);

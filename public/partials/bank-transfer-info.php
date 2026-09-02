@@ -14,12 +14,22 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+$has_fakturoid_doc = !empty($order->fakturoid_invoice_id);
+$fakturoid_ready   = EAB_Fakturoid::is_enabled();
 ?>
 <div class="eab-bank-transfer">
     <h2><?php esc_html_e('Platební instrukce', 'events-and-bookings'); ?></h2>
     <p class="eab-bank-transfer__hold">
         <?php esc_html_e('Místo držíme. Jakmile platbu přijmeme, pošleme potvrzení.', 'events-and-bookings'); ?>
     </p>
+
+    <?php if ($fakturoid_ready && !$has_fakturoid_doc) : ?>
+        <p class="eab-bank-transfer__warning">
+            <?php esc_html_e('Proforma ve Fakturoidu se u této rezervace nevytvořila. Platbu můžete uhradit, ale automatické párování nemusí fungovat — administrátor potvrdí platbu ručně, nebo proformu vytvoří znovu v administraci.', 'events-and-bookings'); ?>
+        </p>
+    <?php endif; ?>
+
     <p><strong><?php esc_html_e('Číslo objednávky:', 'events-and-bookings'); ?></strong> <?php echo esc_html($order->order_number); ?></p>
     <p><strong><?php esc_html_e('Částka:', 'events-and-bookings'); ?></strong> <?php echo esc_html(EAB_Payments::format_price($order->total)); ?></p>
 
@@ -35,7 +45,21 @@ if (!defined('ABSPATH')) {
                 <?php if ($iban) : ?>
                     <tr><th>IBAN</th><td><?php echo esc_html($iban); ?></td></tr>
                 <?php endif; ?>
-                <tr><th><?php esc_html_e('Variabilní symbol', 'events-and-bookings'); ?></th><td><?php echo esc_html($vs); ?></td></tr>
+                <tr>
+                    <th><?php esc_html_e('Variabilní symbol', 'events-and-bookings'); ?></th>
+                    <td>
+                        <?php echo esc_html($vs); ?>
+                        <?php if ($has_fakturoid_doc) : ?>
+                            <br><small><?php esc_html_e('z Fakturoid proformy', 'events-and-bookings'); ?></small>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php if ($has_fakturoid_doc && !empty($order->fakturoid_invoice_number)) : ?>
+                    <tr>
+                        <th><?php esc_html_e('Proforma', 'events-and-bookings'); ?></th>
+                        <td><?php echo esc_html($order->fakturoid_invoice_number); ?></td>
+                    </tr>
+                <?php endif; ?>
             </table>
 
             <p class="eab-bank-transfer__actions">
@@ -75,6 +99,10 @@ if (!defined('ABSPATH')) {
     <?php endif; ?>
 
     <p class="eab-bank-transfer__note">
-        <?php esc_html_e('Po přijetí platby automaticky potvrdíme rezervaci a pošleme e-mail. Do té doby je místo rezervované.', 'events-and-bookings'); ?>
+        <?php if ($has_fakturoid_doc) : ?>
+            <?php esc_html_e('Po přijetí a spárování platby ve Fakturoidu automaticky potvrdíme rezervaci a pošleme e-mail.', 'events-and-bookings'); ?>
+        <?php else : ?>
+            <?php esc_html_e('Po přijetí platby potvrdíme rezervaci a pošleme e-mail. Do té doby je místo rezervované.', 'events-and-bookings'); ?>
+        <?php endif; ?>
     </p>
 </div>
