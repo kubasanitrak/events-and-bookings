@@ -58,7 +58,7 @@ Configure under **Akce a rezervace → Nastavení** (bank account, Fakturoid + w
 
 Admin: **Objednávky** — manual **Potvrdit platbu** remains as backup. Normal path: Fakturoid bank pairing → webhook `invoice_paid` → site confirms seats + e-mail. QR payment uses Paylibo with Fakturoid VS when a proforma exists.
 
-**Fakturoid setup:** see [docs/fakturoid-webhook.md](docs/fakturoid-webhook.md). Enable in settings, paste the shown webhook URL into Fakturoid (event `invoice_paid`), set the same Authorization / `auth_header` value. Use separate Fakturoid firms (or webhook URLs) for staging vs production.
+**Fakturoid setup (klient, česky):** [docs/fakturoid-navod-pro-klienta.md](docs/fakturoid-navod-pro-klienta.md). Technické detaily webhooku: [docs/fakturoid-webhook.md](docs/fakturoid-webhook.md).
 
 ## Composer
 

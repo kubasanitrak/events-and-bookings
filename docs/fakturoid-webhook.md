@@ -1,5 +1,7 @@
 # Fakturoid — proforma + webhook
 
+**Návod pro klienta (česky, krok za krokem):** [fakturoid-navod-pro-klienta.md](fakturoid-navod-pro-klienta.md)
+
 Flow: checkout (bank transfer) → Fakturoid creates **proforma** → customer pays by QR/transfer → Fakturoid pairs by VS → webhook `invoice_paid` → plugin marks order paid + confirmation e-mail.
 
 ## Plugin settings
