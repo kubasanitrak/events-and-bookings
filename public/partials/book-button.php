@@ -18,7 +18,7 @@ $in_basket   = is_user_logged_in() && (new EAB_Basket())->is_in_basket($post_id)
     <?php if (!is_user_logged_in()) : ?>
         <p class="eab-book-cta__hint"><?php esc_html_e('Pro rezervaci se přihlaste nebo zaregistrujte.', 'events-and-bookings'); ?></p>
         <div class="eab-book-cta__actions">
-            <a class="eab-btn" href="<?php echo esc_url(EAB_Event::get_login_url($redirect)); ?>" rel="nofollow">
+            <a class="eab-btn eab-btn--ghost" href="<?php echo esc_url(EAB_Event::get_login_url($redirect)); ?>" rel="nofollow">
                 <?php esc_html_e('Přihlásit', 'events-and-bookings'); ?>
             </a>
             <a class="eab-btn eab-btn--ghost" href="<?php echo esc_url(EAB_Event::get_register_url()); ?>">
