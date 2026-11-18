@@ -346,9 +346,14 @@
 	}
 
 	&__meta {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
+		display: none;
+		visibility: hidden;
+		@include mq(mq-land) {
+			display: flex;
+			visibility: visible;
+			flex-direction: column;
+			align-items: flex-end;
+		}
 		gap: calc(var(--gap) * 0.15);
 		text-align: right;
 		font-size: $fz-MINOR;
