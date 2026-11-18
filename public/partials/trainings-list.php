@@ -19,7 +19,7 @@ $filter_action = $filter_action ?: get_permalink();
             <p class="eab-trainings__label caps"><?php esc_html_e('Pro děti', 'events-and-bookings'); ?></p>
             <div class="eab-trainings__rule" aria-hidden="true"></div>
             <?php if (!empty($kids_title)) : ?>
-                <h2 class="eab-trainings__title"><?php echo esc_html($kids_title); ?></h2>
+                <h3 class="eab-trainings__title"><?php echo esc_html($kids_title); ?></h3>
             <?php endif; ?>
         </header>
 

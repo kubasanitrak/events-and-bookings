@@ -60,32 +60,40 @@ class EAB_Auth {
         }
     }
 
+    /**
+     * Already-authenticated visits to wp-login.php go straight to the role destination.
+     * Rendering a "Pokračovat" link here bounced people through the legacy login page.
+     */
     public function handle_logged_in_login_page() {
         if (!is_user_logged_in() || $this->is_wp_login_action_request()) {
             return;
         }
 
-        $redirect = isset($_REQUEST['redirect_to']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_to'])) : '';
+        $requested = isset($_REQUEST['redirect_to']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_to'])) : '';
+        $user      = wp_get_current_user();
 
-        login_header(esc_html__('Přihlášení', 'events-and-bookings'));
-
-        if ($redirect && wp_validate_redirect($redirect, false)) {
-            echo '<p class="eab-auth-notice"><a href="' . esc_url($redirect) . '">' . esc_html__('Pokračovat', 'events-and-bookings') . '</a></p>';
-        } else {
-            echo '<p class="eab-auth-notice">' . esc_html__('Jste již přihlášeni.', 'events-and-bookings') . '</p>';
-        }
-
-        login_footer();
+        wp_safe_redirect($this->resolve_post_login_url($user, $requested));
         exit;
     }
 
     private function is_wp_login_action_request() {
         $action = isset($_REQUEST['action']) ? sanitize_text_field(wp_unslash($_REQUEST['action'])) : '';
-        if ($action === '') {
+        if ($action === '' || $action === 'login') {
             return false;
         }
 
-        $passthrough = array('logout', 'lostpassword', 'retrievepassword', 'rp', 'resetpass', 'postpass', 'confirmaction');
+        $passthrough = array(
+            'logout',
+            'lostpassword',
+            'retrievepassword',
+            'rp',
+            'resetpass',
+            'postpass',
+            'confirmaction',
+            'confirm_admin_email',
+            'checkemail',
+            'entered_recovery_mode',
+        );
         return in_array($action, $passthrough, true);
     }
 
@@ -146,42 +154,85 @@ class EAB_Auth {
     }
 
     /**
-     * Front-end logins without a meaningful redirect_to land on the member dashboard.
+     * Members go to My Account. Administrators and editors go to the admin dashboard.
+     * A specific front-end target (checkout, an event) is kept.
      */
     public function filter_login_redirect($redirect_to, $requested_redirect_to, $user) {
         if (!$user instanceof WP_User) {
             return $redirect_to;
         }
 
-        $dashboard = self::get_page_url('dashboard') ?: home_url('/muj-ucet/');
-
-        if ($this->should_honor_login_redirect($requested_redirect_to)) {
-            return $requested_redirect_to;
-        }
-
-        if (user_can($user, 'edit_posts')) {
-            return $redirect_to;
-        }
-
-        return $dashboard;
+        return $this->resolve_post_login_url($user, $requested_redirect_to);
     }
 
     /**
-     * Ignore generic WP defaults (home, wp-admin, profile); keep booking/checkout targets.
+     * @param WP_User $user
+     * @param string  $requested Requested redirect_to, if any.
+     */
+    private function resolve_post_login_url($user, $requested = '') {
+        if ($this->should_honor_login_redirect($requested)) {
+            return $requested;
+        }
+
+        if ($user instanceof WP_User && user_can($user, 'edit_others_posts')) {
+            return admin_url();
+        }
+
+        return self::get_page_url('dashboard') ?: home_url('/muj-ucet/');
+    }
+
+    /**
+     * Ignore generic WP defaults and any URL that leads back to the login screen.
+     * Keep booking and checkout targets.
      */
     private function should_honor_login_redirect($url) {
-        if (!$url || !wp_validate_redirect($url, false)) {
+        $validated = ($url && wp_validate_redirect($url, false)) ? $url : '';
+        if ($validated === '' || $this->is_auth_screen_url($validated)) {
             return false;
         }
 
-        $normalized = untrailingslashit($url);
-        $ignored    = array(
-            untrailingslashit(home_url('/')),
-            untrailingslashit(admin_url()),
-            untrailingslashit(admin_url('profile.php')),
+        $target  = $this->normalize_url_key($validated);
+        $ignored = array(
+            $this->normalize_url_key(home_url('/')),
+            $this->normalize_url_key(admin_url()),
+            $this->normalize_url_key(admin_url('profile.php')),
         );
 
-        return !in_array($normalized, $ignored, true);
+        return !in_array($target, $ignored, true);
+    }
+
+    /**
+     * wp-login.php and the legacy /prihlaseni/ page. Sending people back here
+     * produced the intermediate "Pokračovat" screen.
+     */
+    private function is_auth_screen_url($url) {
+        $path = (string) wp_parse_url($url, PHP_URL_PATH);
+        if ($path !== '' && strpos($path, 'wp-login.php') !== false) {
+            return true;
+        }
+
+        $login = self::get_page_url('login');
+        if ($login && $this->normalize_url_key($url) === $this->normalize_url_key($login)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Compare URLs without scheme so protocol-relative redirect_to values match.
+     */
+    private function normalize_url_key($url) {
+        $parts = wp_parse_url($url);
+        if (!is_array($parts)) {
+            return untrailingslashit((string) $url);
+        }
+
+        $host = isset($parts['host']) ? strtolower($parts['host']) : '';
+        $port = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+        $path = isset($parts['path']) ? untrailingslashit($parts['path']) : '';
+
+        return $host . $port . $path;
     }
 
     public function filter_login_message($message) {
@@ -413,15 +464,8 @@ class EAB_Auth {
         wp_set_auth_cookie($user->ID, $remember);
         wp_set_current_user($user->ID);
 
-        $redirect = isset($_POST['eab_redirect']) ? esc_url_raw(wp_unslash($_POST['eab_redirect'])) : '';
-        if (!$redirect || !wp_validate_redirect($redirect, false)) {
-            $redirect = self::get_page_url('dashboard');
-            if (!$redirect) {
-                $redirect = home_url('/');
-            }
-        }
-
-        wp_safe_redirect($redirect);
+        $requested = isset($_POST['eab_redirect']) ? esc_url_raw(wp_unslash($_POST['eab_redirect'])) : '';
+        wp_safe_redirect($this->resolve_post_login_url($user, $requested));
         exit;
     }
 

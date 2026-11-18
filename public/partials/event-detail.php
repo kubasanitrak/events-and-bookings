@@ -160,7 +160,7 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
     
 
 <section class="eab-detail__section even-cols pad-B pad-T" data-theme="silky-blue">
-    <div class="eab-detail__col even-cols--item">
+    <div class="eab-detail__col even-cols--item h5">
         <h5 class="eab-item--subtitle border-B caps"><?php esc_html_e('O Kempu', 'events-and-bookings'); ?></h5>
         <?php echo apply_filters('the_content', $post->post_content); ?>
     </div>
@@ -202,7 +202,7 @@ $img_id   = EAB_Event::get_tile_image_id($post_id);
                 <?php
                 $attendees = apply_filters('eab_event_attendees', EAB_Capacity::get_public_attendee_names($post_id), $post_id);
                 if (!empty($attendees)) :
-                    echo '<ul class="eab-attendees-list">';
+                    echo '<ul class="eab-attendees-list ">';
                     foreach ($attendees as $name) {
                         echo '<li>' . esc_html($name) . '</li>';
                     }
