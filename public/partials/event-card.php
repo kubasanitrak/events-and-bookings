@@ -23,7 +23,7 @@ if ($layout === 'training-row') :
     $meta = EAB_Event::get_training_row_meta($post_id);
     ?>
     <article class="eab-training-row" data-post-id="<?php echo esc_attr($post_id); ?>">
-        <h3 class="eab-training-row__title"><?php echo esc_html($title); ?></h3>
+        <h4 class="eab-training-row__title"><?php echo esc_html($title); ?></h4>
         <div class="eab-training-row__meta">
             <?php if (!empty($meta['location'])) : ?>
                 <span class="eab-training-row__location caps"><?php echo esc_html($meta['location']); ?></span>
